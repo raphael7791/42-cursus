@@ -1,6 +1,6 @@
 #include "ft_printf.h"
 
-int	ft_print_nbr(int n)
+int	ft_printf_nbr(int n)
 {
 	int	count;
 
@@ -12,11 +12,11 @@ int	ft_print_nbr(int n)
 	}
 	if (n < 0)
 	{
-		count += ft_print_char('-');
+		count += ft_printf_char('-');
 		n = -n;
 	}
 	if (n >= 10)
-		count += ft_print_nbr(n / 10);
-	count += ft_print_char((n % 10) + '0');
+		count += ft_printf_nbr(n / 10);
+	count += ft_printf_char((n % 10) + '0');
 	return (count);
 }

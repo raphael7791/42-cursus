@@ -38,7 +38,8 @@ int	ft_printf(const char *format, ...)
 		if (format[i] == '%')
 		{
 			i++;
-			count += ft_print_format(format[i], args);
+			if (format[i])
+				count += ft_print_format(format[i], args);
 		}
 		else
 			count += ft_print_char(format[i]);

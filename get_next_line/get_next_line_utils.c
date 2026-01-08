@@ -13,6 +13,8 @@ char    *ft_strchr(char *s, int c)
     size_t i;
     char ch;
 
+    if (!s)
+		return (NULL);
     i = 0;
     ch = (char)c;
     while (s[i])
@@ -21,7 +23,7 @@ char    *ft_strchr(char *s, int c)
             return (&s[i]);
         i++;
     }
-    if (s[i] == '\0')
+    if (ch == '\0')
         return (&s[i]);
     return (NULL);
 }

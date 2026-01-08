@@ -4,15 +4,21 @@ char	*read_and_stash(int fd, char *stash)
 {
 	char	buffer[BUFFER_SIZE + 1];
 	int		bytes_read;
+    char	*temp;
 
 	bytes_read = 1;
-	while (bytes_read > 0 && !ft_strchr(stash, '\n'))
+	while (bytes_read > 0 && (!stash || !ft_strchr(stash, '\n')))
 	{
 		bytes_read = read(fd, buffer, BUFFER_SIZE);
 		if (bytes_read == -1)
+		{
+			free(stash);
 			return (NULL);
+		}
 		buffer[bytes_read] = '\0';
+		temp = stash;
 		stash = ft_strjoin(stash, buffer);
+		free(temp);
 	}
 	return (stash);
 }
@@ -23,6 +29,8 @@ char	*extract_line(char *stash)
 	size_t	i;
 	size_t	j;
 
+    if (!stash || !stash[0])
+        return (NULL);
 	i = 0;
 	while (stash[i] && stash[i] != '\n')
 		i++;
@@ -59,7 +67,10 @@ char	*clean_stash(char *stash)
 	}
 	new_stash = malloc(sizeof(char) * (ft_strlen(stash) - i + 1));
 	if (!new_stash)
-		return (NULL);
+    {
+        free(stash);
+        return (NULL);
+    }
 	j = 0;
 	while (stash[i])
 		new_stash[j++] = stash[i++];

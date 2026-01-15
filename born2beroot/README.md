@@ -4,58 +4,35 @@
 
 ## Description
 
-This project introduces system administration through virtualization. The goal is to create a secure virtual machine under Debian, implementing strict security rules including SSH configuration, firewall setup, password policies, and system monitoring.
+This project is about creating a virtual machine under Debian with strict security rules. A virtual machine allows you to run an operating system inside your main OS, which is useful for testing and learning without risking your actual system.
 
-## Instructions
+The goal is to learn system administration basics: user management, SSH configuration, firewall, password policy, and automation with cron.
 
-1. Import the virtual machine in VirtualBox (or UTM for Mac M1/M2)
-2. Start the VM and enter the disk encryption password
-3. Login with user credentials
-4. Connect via SSH: `ssh <user>@<ip> -p 4242`
+## How to use
+
+1. Import the VM in VirtualBox
+2. Start the VM and enter the encryption password
+3. Log in with user `rbriguet`
+4. To connect via SSH: `ssh rbriguet@<IP> -p 4242`
+
+## Technical choices
+
+**Why Debian over Rocky Linux?**
+I chose Debian because it's more beginner-friendly for a first sysadmin project. Rocky is based on RHEL and uses different tools (dnf instead of apt, SELinux instead of AppArmor, firewalld instead of UFW). Debian has more documentation available and a larger community for troubleshooting.
+
+**AppArmor vs SELinux**
+Debian uses AppArmor by default. It's profile-based and easier to configure. SELinux (used by Rocky) is more powerful but also more complex with its labeling system.
+
+**UFW for firewall**
+UFW (Uncomplicated Firewall) is simple to use. Commands like `ufw allow 4242` are straightforward compared to iptables or firewalld.
+
+## Bonus
+
+- WordPress with lighttpd, MariaDB and PHP
+- Fail2ban to protect SSH against brute force attacks
 
 ## Resources
 
-- [Debian Documentation](https://www.debian.org/doc/)
-- [UFW Manual](https://help.ubuntu.com/community/UFW)
-- [LVM Guide](https://wiki.debian.org/LVM)
-- [SSH Documentation](https://www.openssh.com/manual.html)
-
-### AI Usage
-
-I used Claude (Anthropic) as a learning tool to:
-- Understand concepts (VM, LVM, SSH, firewall, sudo)
-- Get step-by-step guidance for configuration
-- Debug errors encountered during setup
-
-AI was not used to generate direct solutions but to understand each step of the process.
-
-## Project description
-
-### Operating System Choice: Debian
-
-**Pros:** Beginner-friendly, extensive documentation, large community, stable.
-**Cons:** Slower release cycle, older packages in stable version.
-
-Rocky Linux was not chosen due to its higher complexity with SELinux and firewalld.
-
-### Design Choices
-
-- **Partitioning:** Encrypted LVM for data security
-- **SSH:** Port 4242, root login disabled
-- **Firewall:** UFW with only port 4242 open
-- **Password policy:** 30-day expiration, 10 characters minimum, complexity requirements
-- **Sudo:** Limited to 3 attempts, full logging enabled
-
-### Comparisons
-
-| Debian | Rocky Linux |
-|--------|-------------|
-| APT package manager | DNF package manager |
-| AppArmor (simpler) | SELinux (more complex) |
-| UFW (user-friendly) | firewalld (more features) |
-
-| VirtualBox | UTM |
-|------------|-----|
-| x86_64 architecture | ARM architecture (M1/M2) |
-| .vdi disk format | .qcow2 disk format |
-| Windows/Linux/Intel Mac | Apple Silicon Mac |
+- Debian documentation: https://wiki.debian.org
+- Born2beRoot guide by chlimous on GitHub
+- Claude (AI) to understand some concepts

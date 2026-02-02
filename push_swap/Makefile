@@ -6,6 +6,7 @@ CFLAGS = -Wall -Wextra -Werror
 SRCS = main.c \
        stack_utils.c \
        parsing.c \
+       parsing_utils.c \
        ft_atol.c \
        operations_swap.c \
        operations_push.c \
@@ -14,7 +15,10 @@ SRCS = main.c \
        algo_simple.c \
        algo_simple_utils.c \
        algo_medium.c \
+       algo_medium_utils.c \
        algo_complex.c \
+       algo_complex_utils.c \
+       algo_complex_cost.c \
        algo_adaptive.c \
        bench.c \
        ft_split.c \

@@ -7,7 +7,6 @@ void    rra(t_stack **stack_a, t_stats *stats)
 
     if (*stack_a == NULL || (*stack_a)->next == NULL)
         return;
-    
     first = *stack_a;
     current = *stack_a;
     while (current->next->next != NULL)
@@ -29,7 +28,6 @@ void    rrb(t_stack **stack_b, t_stats *stats)
 
     if (*stack_b == NULL || (*stack_b)->next == NULL)
         return;
-    
     first = *stack_b;
     current = *stack_b;
     while (current->next->next != NULL)
@@ -49,7 +47,6 @@ void    rrr(t_stack **stack_a, t_stack **stack_b, t_stats *stats)
     t_stack *current;
     t_stack *first;
 
-    // rra
     if (*stack_a != NULL && (*stack_a)->next != NULL)
     {
         first = *stack_a;
@@ -60,8 +57,6 @@ void    rrr(t_stack **stack_a, t_stack **stack_b, t_stats *stats)
         current->next = NULL;
         (*stack_a)->next = first;
     }
-
-    // rrb
     if (*stack_b != NULL && (*stack_b)->next != NULL)
     {
         first = *stack_b;

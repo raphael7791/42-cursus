@@ -29,14 +29,10 @@ void    sort_three(t_stack **stack_a, t_stats *stats)
     first = (*stack_a)->value;
     second = (*stack_a)->next->value;
     third = (*stack_a)->next->next->value;
-
-    // Étape 1 & 2 : mets le max à la fin
     if (first > second && first > third)
         ra(stack_a, stats);
     else if (second > first && second > third)
         rra(stack_a, stats);
-    
-    // Étape 3 : compare les 2 premiers
     first = (*stack_a)->value;
     second = (*stack_a)->next->value;
     if (first > second)

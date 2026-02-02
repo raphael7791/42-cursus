@@ -7,101 +7,40 @@ static int	abs_val(int n)
 	return (n);
 }
 
-void	find_cheapest(t_stack *stack_a, t_stack *stack_b,
-	int *cost_a, int *cost_b)
+static void	set_costs(int *tmp, int *d, int *sz)
 {
-	int		size_a;
-	int		size_b;
-	int		best_total;
-	int		costs[2];
-	t_stack	*current;
-
-	size_a = stack_size(stack_a);
-	size_b = stack_size(stack_b);
-	best_total = 2147483647;
-	*cost_a = 0;
-	*cost_b = 0;
-	current = stack_a;
-	find_cheapest_loop(current, stack_b, size_a, size_b,
-		&best_total, cost_a, cost_b);
+	if (d[0] <= sz[0] / 2)
+		tmp[0] = d[0];
+	else
+		tmp[0] = -(sz[0] - d[0]);
+	if (d[1] <= sz[1] / 2)
+		tmp[1] = d[1];
+	else
+		tmp[1] = -(sz[1] - d[1]);
 }
 
-void	find_cheapest_loop(t_stack *current, t_stack *stack_b,
-	int size_a, int size_b, int *best_total, int *cost_a, int *cost_b)
+void	find_cheapest(t_stack *a, t_stack *b, int *c)
 {
-	int	pos_a;
-	int	pos_b;
-	int	current_cost_a;
-	int	current_cost_b;
+	int		sz[2];
+	int		d[3];
+	int		tmp[2];
+	t_stack	*cur;
 
-	pos_a = 0;
-	while (current != NULL)
+	sz[0] = stack_size(a);
+	sz[1] = stack_size(b);
+	d[2] = 2147483647;
+	d[0] = -1;
+	cur = a;
+	while (++d[0], cur != NULL)
 	{
-		pos_b = get_target_pos_b(stack_b, current->index);
-		if (pos_a <= size_a / 2)
-			current_cost_a = pos_a;
-		else
-			current_cost_a = -(size_a - pos_a);
-		if (pos_b <= size_b / 2)
-			current_cost_b = pos_b;
-		else
-			current_cost_b = -(size_b - pos_b);
-		if (abs_val(current_cost_a) + abs_val(current_cost_b) < *best_total)
+		d[1] = get_target_pos_b(b, cur->index);
+		set_costs(tmp, d, sz);
+		if (abs_val(tmp[0]) + abs_val(tmp[1]) < d[2])
 		{
-			*best_total = abs_val(current_cost_a) + abs_val(current_cost_b);
-			*cost_a = current_cost_a;
-			*cost_b = current_cost_b;
+			d[2] = abs_val(tmp[0]) + abs_val(tmp[1]);
+			c[0] = tmp[0];
+			c[1] = tmp[1];
 		}
-		pos_a++;
-		current = current->next;
+		cur = cur->next;
 	}
-}
-
-static void	do_double_rotations(t_stack **stack_a, t_stack **stack_b,
-	int *cost_a, int *cost_b, t_stats *stats)
-{
-	while (*cost_a > 0 && *cost_b > 0)
-	{
-		rr(stack_a, stack_b, stats);
-		(*cost_a)--;
-		(*cost_b)--;
-	}
-	while (*cost_a < 0 && *cost_b < 0)
-	{
-		rrr(stack_a, stack_b, stats);
-		(*cost_a)++;
-		(*cost_b)++;
-	}
-}
-
-static void	do_single_rotations(t_stack **stack_a, t_stack **stack_b,
-	int *cost_a, int *cost_b, t_stats *stats)
-{
-	while (*cost_a > 0)
-	{
-		ra(stack_a, stats);
-		(*cost_a)--;
-	}
-	while (*cost_a < 0)
-	{
-		rra(stack_a, stats);
-		(*cost_a)++;
-	}
-	while (*cost_b > 0)
-	{
-		rb(stack_b, stats);
-		(*cost_b)--;
-	}
-	while (*cost_b < 0)
-	{
-		rrb(stack_b, stats);
-		(*cost_b)++;
-	}
-}
-
-void	do_rotations(t_stack **stack_a, t_stack **stack_b,
-	int *cost_a, int *cost_b, t_stats *stats)
-{
-	do_double_rotations(stack_a, stack_b, cost_a, cost_b, stats);
-	do_single_rotations(stack_a, stack_b, cost_a, cost_b, stats);
 }

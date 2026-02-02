@@ -19,8 +19,10 @@ SRCS = main.c \
        algo_complex.c \
        algo_complex_utils.c \
        algo_complex_cost.c \
+       algo_complex_rot.c \
        algo_adaptive.c \
        bench.c \
+       bench_utils.c \
        ft_split.c \
        flags.c
 

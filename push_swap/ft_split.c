@@ -26,11 +26,7 @@ static char	*extract_word(char const *s, size_t start, size_t end)
 		return (NULL);
 	i = 0;
 	while (start < end)
-	{
-		word[i] = s[start];
-		i++;
-		start++;
-	}
+		word[i++] = s[start++];
 	word[i] = '\0';
 	return (word);
 }
@@ -45,6 +41,14 @@ static size_t	ft_wordlen(char const *s, char c)
 	return (len);
 }
 
+static void	*free_all(char **result, size_t j)
+{
+	while (j > 0)
+		free(result[--j]);
+	free(result);
+	return (NULL);
+}
+
 char	**ft_split(char const *s, char c)
 {
 	char	**result;
@@ -56,24 +60,16 @@ char	**ft_split(char const *s, char c)
 	result = malloc((count_words(s, c) + 1) * sizeof(char *));
 	if (!result)
 		return (NULL);
-	i = 0;
+	i = -1;
 	j = 0;
-	while (s[i])
+	while (s[++i])
 	{
-		if (s[i] == c)
-			i++;
-		else
+		if (s[i] != c)
 		{
 			result[j] = extract_word(s, i, i + ft_wordlen(s + i, c));
-			if (!result[j])
-			{
-				while (j > 0)
-					free(result[--j]);
-				free(result);
-				return (NULL);
-			}
-			j++;
-			i += ft_wordlen(s + i, c);
+			if (!result[j++])
+				return (free_all(result, j - 1));
+			i += ft_wordlen(s + i, c) - 1;
 		}
 	}
 	result[j] = NULL;

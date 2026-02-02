@@ -2,33 +2,29 @@
 
 int	find_closest_in_range(t_stack *stack, int min, int max)
 {
-	int		top_dist;
-	int		bot_dist;
-	int		size;
+	int		d[2];
 	int		i;
-	t_stack	*current;
+	t_stack	*cur;
 
-	size = stack_size(stack);
-	top_dist = -1;
-	bot_dist = -1;
-	i = 0;
-	current = stack;
-	while (current != NULL)
+	d[0] = -1;
+	d[1] = -1;
+	i = -1;
+	cur = stack;
+	while (++i, cur != NULL)
 	{
-		if (current->index >= min && current->index <= max)
+		if (cur->index >= min && cur->index <= max)
 		{
-			if (top_dist == -1)
-				top_dist = i;
-			bot_dist = i;
+			if (d[0] == -1)
+				d[0] = i;
+			d[1] = i;
 		}
-		i++;
-		current = current->next;
+		cur = cur->next;
 	}
-	if (top_dist == -1)
+	if (d[0] == -1)
 		return (-1);
-	if (top_dist <= size - bot_dist - 1)
-		return (top_dist);
-	return (-(size - bot_dist));
+	if (d[0] <= stack_size(stack) - d[1] - 1)
+		return (d[0]);
+	return (-(stack_size(stack) - d[1]));
 }
 
 static int	find_max_index(t_stack *stack_b)

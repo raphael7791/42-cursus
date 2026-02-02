@@ -6,7 +6,6 @@ void    pa(t_stack **stack_a, t_stack **stack_b, t_stats *stats)
 
     if (*stack_b == NULL)
         return ;
-
     tmp = *stack_b;
     *stack_b = (*stack_b)->next;
     tmp->next = *stack_a;
@@ -22,7 +21,6 @@ void    pb(t_stack **stack_a, t_stack **stack_b, t_stats *stats)
 
     if (*stack_a == NULL)
         return ;
-
     tmp = *stack_a;
     *stack_a = (*stack_a)->next;
     tmp->next = *stack_b;

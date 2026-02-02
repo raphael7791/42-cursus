@@ -35,35 +35,33 @@ static int	get_chunk_count(int size)
 	return (15);
 }
 
-static void	push_chunk_to_b(t_stack **stack_a, t_stack **stack_b,
-	int min, int max, t_stats *stats)
+static void	rotate_to_dist(t_stack **a, int dist, t_stats *stats)
+{
+	while (dist > 0)
+	{
+		ra(a, stats);
+		dist--;
+	}
+	while (dist < 0)
+	{
+		rra(a, stats);
+		dist++;
+	}
+}
+
+static void	push_chunk_to_b(t_stack **a, t_stack **b, int *range, t_stats *st)
 {
 	int	dist;
 
 	while (1)
 	{
-		dist = find_closest_in_range(*stack_a, min, max);
+		dist = find_closest_in_range(*a, range[0], range[1]);
 		if (dist == -1)
 			break ;
-		if (dist >= 0)
-		{
-			while (dist > 0)
-			{
-				ra(stack_a, stats);
-				dist--;
-			}
-		}
-		else
-		{
-			while (dist < 0)
-			{
-				rra(stack_a, stats);
-				dist++;
-			}
-		}
-		pb(stack_a, stack_b, stats);
-		if ((*stack_b)->index < (min + max) / 2)
-			rb(stack_b, stats);
+		rotate_to_dist(a, dist, st);
+		pb(a, b, st);
+		if ((*b)->index < (range[0] + range[1]) / 2)
+			rb(b, st);
 	}
 }
 
@@ -73,20 +71,24 @@ void	sort_medium(t_stack **stack_a, t_stack **stack_b, t_stats *stats)
 	int	chunks;
 	int	chunk_size;
 	int	i;
+	int	range[2];
 
 	assign_index(*stack_a);
 	size = stack_size(*stack_a);
 	chunks = get_chunk_count(size);
 	chunk_size = size / chunks;
-	i = 0;
-	while (i < chunks)
+	i = -1;
+	while (++i < chunks)
 	{
-		push_chunk_to_b(stack_a, stack_b,
-			i * chunk_size,
-			(i + 1) * chunk_size - 1, stats);
-		i++;
+		range[0] = i * chunk_size;
+		range[1] = (i + 1) * chunk_size - 1;
+		push_chunk_to_b(stack_a, stack_b, range, stats);
 	}
 	if (i * chunk_size < size)
-		push_chunk_to_b(stack_a, stack_b, i * chunk_size, size - 1, stats);
+	{
+		range[0] = i * chunk_size;
+		range[1] = size - 1;
+		push_chunk_to_b(stack_a, stack_b, range, stats);
+	}
 	push_back_to_a(stack_a, stack_b, stats);
 }

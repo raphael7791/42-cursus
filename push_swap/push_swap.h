@@ -105,12 +105,8 @@ int		get_max_index(t_stack *stack);
 int		get_min_index(t_stack *stack);
 int		get_target_pos_b(t_stack *stack_b, int index_a);
 int		get_target_pos_a(t_stack *stack_a, int index_b);
-void	find_cheapest(t_stack *stack_a, t_stack *stack_b,
-			int *cost_a, int *cost_b);
-void	find_cheapest_loop(t_stack *current, t_stack *stack_b,
-			int size_a, int size_b, int *best_total, int *cost_a, int *cost_b);
-void	do_rotations(t_stack **stack_a, t_stack **stack_b,
-			int *cost_a, int *cost_b, t_stats *stats);
+void	find_cheapest(t_stack *a, t_stack *b, int *c);
+void	do_rotations(t_stack **a, t_stack **b, int *c, t_stats *st);
 
 // Algo adaptive
 void	sort_adaptive(t_stack **stack_a, t_stack **stack_b, t_stats *stats);
@@ -123,5 +119,6 @@ t_options	parse_options(int argc, char **argv);
 void	init_stats(t_stats *stats);
 void	print_stats(t_stats *stats, float disorder, t_algo algo);
 float	compute_disorder(t_stack *stack);
+void	print_ops(t_stats *s);
 
 #endif

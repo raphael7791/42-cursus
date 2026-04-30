@@ -22,9 +22,14 @@ def test_error_types() -> None:
         try:
             garden_operations(i)
             print("Operation completed successfully")
-        except (ValueError, ZeroDivisionError,
-                FileNotFoundError, TypeError) as e:
-            print(f"Caught {type(e).__name__}: {e}")
+        except ValueError as e:
+            print(f"Caught ValueError: {e}")
+        except ZeroDivisionError as e:
+            print(f"Caught ZeroDivisionError: {e}")
+        except FileNotFoundError as e:
+            print(f"Caught FileNotFoundError: {e}")
+        except TypeError as e:
+            print(f"Caught TypeError: {e}")
 
     print("All error types tested successfully!")
 
@@ -47,15 +52,14 @@ if __name__ == "__main__":
 #   Code volontairement casse. Chaque numero declenche un type d'erreur.
 #   Si n >= 4 → aucun if/elif ne matche → pas d'erreur.
 #
-# Attraper PLUSIEURS types d'un coup :
-#   except (ValueError, ZeroDivisionError, FileNotFoundError, TypeError) as e:
-#   Le tuple (...) = "attrape n'importe lequel de ces types"
-#   Sans tuple, il faudrait 4 blocs except separes.
+# Attraper PLUSIEURS types avec un seul try :
+#   On met plusieurs "except" a la suite dans le meme bloc try.
+#   Chaque except attrape un type precis → on sait lequel c'est
+#   sans avoir besoin d'appeler type() (qui est INTERDIT par le sujet).
 #
-# type(e).__name__ :
-#   type(e) → la classe de l'erreur (<class 'ValueError'>)
-#   .__name__ → juste le nom en string ("ValueError")
-#   Permet d'afficher QUEL type d'erreur on a attrape.
+# ATTENTION : type() est dans les fonctions NON autorisees.
+#   On ne peut PAS faire type(e).__name__. A la place, on utilise
+#   des except separes pour chaque type d'erreur.
 #
 # _ = 42 / 0 :
 #   _ est une convention = "variable jetable, je m'en fiche du resultat"

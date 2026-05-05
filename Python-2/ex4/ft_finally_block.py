@@ -53,3 +53,41 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# =============================================================================
+# NOTES — Exercice 4 : finally (nettoyage garanti)
+# =============================================================================
+#
+# CONTEXTE :
+# On ouvre une vanne d'arrosage. Si le programme plante, il faut
+# quand meme la fermer. finally garantit que ca arrive TOUJOURS.
+#
+# water_plant(plant_name) :
+#   Verifie si le nom est capitalise avec capitalize().
+#   "lettuce".capitalize() → "Lettuce" → different → raise PlantError
+#   "Tomato".capitalize() → "Tomato" → identique → on arrose
+#
+# test_watering_system(plants) :
+#   Structure complete : try / except / finally
+#   - try : arrose chaque plante dans une boucle
+#   - except : si PlantError, affiche l'erreur et fait return
+#   - finally : ferme le systeme QUOI QU'IL ARRIVE
+#
+# ORDRE D'EXECUTION en cas d'erreur :
+#   1. try → code s'execute jusqu'a l'erreur
+#   2. except → attrape l'erreur, affiche le message
+#   3. finally → s'execute AVANT le return
+#   4. return → maintenant on quitte la fonction
+#
+# POINT CLE : finally gagne toujours.
+#   - Pas d'erreur → try puis finally
+#   - Erreur attrapee → try puis except puis finally
+#   - Erreur + return → try puis except puis finally PUIS return
+#
+# Sans finally, un simple print a la fin de la fonction ne
+# s'executerait jamais en cas de return dans le except.
+#
+# Cas d'usage reel : fermer un fichier, une connexion base de
+# donnees, liberer un verrou, couper un moteur...
+# =============================================================================

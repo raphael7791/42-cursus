@@ -37,7 +37,8 @@ def main() -> None:
     total: int = sum(inventory.values())
     print(f"Total quantity of the {len(inventory)} items: {total}")
 
-    for item, qty in inventory.items():
+    for item in inventory.keys():
+        qty: int = inventory[item]
         pct: float = round(qty / total * 100, 1)
         print(f"Item {item} represents {pct}%")
 
@@ -45,7 +46,8 @@ def main() -> None:
     most_qty: int = -1
     least_name: str = ""
     least_qty: int = -1
-    for item, qty in inventory.items():
+    for item in inventory.keys():
+        qty = inventory[item]
         if most_qty == -1 or qty > most_qty:
             most_name = item
             most_qty = qty

@@ -37,9 +37,9 @@ def main() -> None:
         event: tuple[str, str] = next(stream)
         print(f"Event {i}: Player {event[0]} did action {event[1]}")
 
-    event_list: list[tuple[str, str]] = [
-        next(stream) for _ in range(10)
-    ]
+    event_list: list[tuple[str, str]] = []
+    for _ in range(10):
+        event_list.append(next(stream))
     print(f"Built list of 10 events: {event_list}")
 
     for event in consume_event(event_list):

@@ -60,3 +60,35 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# =============================================================================
+# NOTES — Exercice 2 : tuples et coordonnees 3D
+# =============================================================================
+#
+# TUPLE :
+#   Comme une liste mais IMMUTABLE (pas modifiable apres creation).
+#   Parentheses () au lieu de crochets [].
+#   pos = (1.0, 2.5, 3.0)
+#   pos[0] → 1.0 (x), pos[1] → 2.5 (y), pos[2] → 3.0 (z)
+#   Ideal pour des coordonnees : une position ne doit pas changer.
+#
+# get_player_pos() :
+#   while True → boucle infinie, on sort uniquement avec return
+#   input() → demande une saisie utilisateur, retourne une string
+#   split(",") → coupe la string a chaque virgule
+#   strip() → enleve les espaces autour (" 2.5 " → "2.5")
+#   float() → convertit en nombre decimal
+#   Si format invalide → "Invalid syntax" + continue (relance la boucle)
+#   Si valeur invalide → "Error on parameter" + continue
+#   Si tout OK → return (coords) → sort de la boucle
+#
+# distance() :
+#   Theoreme de Pythagore en 3D.
+#   ** 2 = au carre, math.sqrt() = racine carree (le symbole √)
+#   round(valeur, 4) = arrondir a 4 decimales
+#
+# OBJECTIF DE L'EXERCICE :
+#   Pretexte pour apprendre les tuples. On stocke des positions 3D
+#   dans des tuples car une position ne doit pas etre modifiee.
+# =============================================================================

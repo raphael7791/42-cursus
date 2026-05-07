@@ -37,3 +37,33 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# =============================================================================
+# NOTES — Exercice 1 : construire et analyser une liste
+# =============================================================================
+#
+# CONSTRUIRE UNE LISTE :
+#   scores: list[int] = []     → liste vide
+#   scores.append(42)          → ajoute 42 a la fin
+#
+# FILTRER LES MAUVAISES DONNEES :
+#   try: scores.append(int(arg))   → si ca marche, on ajoute
+#   except ValueError:             → si "ab", on affiche l'erreur
+#   La boucle CONTINUE avec l'argument suivant (pas de crash).
+#
+# DEUX VERIFICATIONS :
+#   1. len(sys.argv) < 2 → aucun argument du tout
+#   2. len(scores) == 0  → des arguments mais TOUS invalides
+#   Les deux cas affichent le meme message d'usage.
+#
+# FONCTIONS DE STATS SUR LES LISTES :
+#   sum(scores)  → additionne tout
+#   max(scores)  → le plus grand
+#   min(scores)  → le plus petit
+#   len(scores)  → combien d'elements
+#
+# MOYENNE :
+#   average = total / len(scores)
+#   La division / retourne toujours un float en Python.
+# =============================================================================

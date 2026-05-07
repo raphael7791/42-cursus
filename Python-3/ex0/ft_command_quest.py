@@ -22,3 +22,30 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# =============================================================================
+# NOTES — Exercice 0 : sys.argv et les listes
+# =============================================================================
+#
+# NOTION CLE : sys.argv
+#   Quand on tape "python3 script.py hello world", Python stocke tout
+#   dans une liste : sys.argv = ["script.py", "hello", "world"]
+#   - sys.argv[0] → nom du programme (toujours)
+#   - sys.argv[1:] → les arguments (slicing = tout sauf le premier)
+#   - len(sys.argv) → nombre total (programme + arguments)
+#
+# C'EST QUOI UNE LISTE :
+#   Collection ordonnee d'elements. Chaque element a un index (position).
+#   ma_liste[0] → premier element
+#   ma_liste[1:] → du 2eme jusqu'a la fin (slicing)
+#   len(ma_liste) → nombre d'elements
+#
+# import sys :
+#   Charge le module sys pour acceder a sys.argv.
+#   "import" = charger une boite a outils.
+#
+# sys.argv[1:] (slicing) :
+#   Prend tout a partir de l'index 1 → exclut le nom du programme.
+#   On boucle dessus avec for arg in sys.argv[1:]
+# =============================================================================

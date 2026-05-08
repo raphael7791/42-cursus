@@ -55,3 +55,30 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# =============================================================================
+# NOTES — Exercice 3 : sets (ensembles) et operations
+# =============================================================================
+#
+# SET :
+#   Collection d'elements UNIQUES et NON ORDONNES.
+#   Pas de doublons, pas d'index. Accolades {}.
+#   {"a", "b", "b"} → {"a", "b"} (doublon supprime)
+#
+# OPERATIONS SUR LES SETS :
+#   union(autre)        → tous les elements des deux (A + B)
+#   intersection(autre) → seulement ce qui est dans les deux (A ∩ B)
+#   difference(autre)   → ce qui est dans A mais PAS dans B (A - B)
+#
+# gen_player_achievements() :
+#   random.randint(4, 10) → nombre aleatoire entre 4 et 10
+#   random.sample(liste, count) → pioche count elements sans repetition
+#   set(...) → convertit en ensemble
+#
+# LOGIQUE DES OPERATIONS :
+#   Tous distincts : set vide + union de chaque joueur
+#   Communs a tous : set complet + intersection de chaque joueur
+#   Uniques a un joueur : ses succes - ceux de tous les autres
+#   Manquants : tous les succes - ceux du joueur
+# =============================================================================

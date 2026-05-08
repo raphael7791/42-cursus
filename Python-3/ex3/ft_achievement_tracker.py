@@ -22,34 +22,34 @@ def main() -> None:
     print("=== Achievement Tracker System ===")
 
     names: list[str] = ["Alice", "Bob", "Charlie", "Dylan"]
-    players: dict[str, set[str]] = {}
+    players: list[tuple[str, set[str]]] = []
 
     for name in names:
         achievements: set[str] = gen_player_achievements()
-        players[name] = achievements
+        players.append((name, achievements))
         print(f"Player {name}: {achievements}")
 
     all_achievements: set[str] = set()
-    for a in players.values():
+    for name, a in players:
         all_achievements = all_achievements.union(a)
     print(f"All distinct achievements: {all_achievements}")
 
     common: set[str] = set(ALL_ACHIEVEMENTS)
-    for a in players.values():
+    for name, a in players:
         common = common.intersection(a)
     print(f"Common achievements: {common}")
 
-    for name in names:
+    for name, achievements in players:
         others: set[str] = set()
-        for other_name, a in players.items():
+        for other_name, other_a in players:
             if other_name != name:
-                others = others.union(a)
-        unique: set[str] = players[name].difference(others)
+                others = others.union(other_a)
+        unique: set[str] = achievements.difference(others)
         print(f"Only {name} has: {unique}")
 
     full_set: set[str] = set(ALL_ACHIEVEMENTS)
-    for name in names:
-        missing: set[str] = full_set.difference(players[name])
+    for name, achievements in players:
+        missing: set[str] = full_set.difference(achievements)
         print(f"{name} is missing: {missing}")
 
 
@@ -75,6 +75,12 @@ if __name__ == "__main__":
 #   random.randint(4, 10) → nombre aleatoire entre 4 et 10
 #   random.sample(liste, count) → pioche count elements sans repetition
 #   set(...) → convertit en ensemble
+#
+# STOCKAGE DES JOUEURS :
+#   On utilise une liste de tuples (nom, set) et PAS un dict,
+#   car les dicts ne sont introduits qu'a l'exercice 4.
+#   players: list[tuple[str, set[str]]] = []
+#   for name, achievements in players: → tuple unpacking
 #
 # LOGIQUE DES OPERATIONS :
 #   Tous distincts : set vide + union de chaque joueur

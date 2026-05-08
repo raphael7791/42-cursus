@@ -49,3 +49,42 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# =============================================================================
+# NOTES — Exercice 5 : generateurs (yield)
+# =============================================================================
+#
+# GENERATEUR :
+#   Fonction qui utilise yield au lieu de return.
+#   yield = "produire une valeur puis se mettre en pause"
+#   La fonction ne quitte PAS, elle attend la prochaine demande.
+#
+# yield vs return :
+#   return → quitte definitivement, une seule execution
+#   yield  → pause, reprend ou elle s'etait arretee
+#
+# UTILISATION :
+#   g = gen_event()   → cree le generateur (PAS encore execute)
+#   next(g)           → execute jusqu'au yield, retourne la valeur
+#   next(g)           → reprend apres le yield, re-execute, etc.
+#   for e in g:       → appelle next() automatiquement a chaque tour
+#
+# GENERATEUR INFINI (while True + yield) :
+#   Ne plante PAS car yield met en pause entre chaque tour.
+#   Le while True ne tourne que quand on appelle next().
+#   1000 appels = 1000 tours, pas de boucle infinie.
+#
+# typing.Generator[YieldType, SendType, ReturnType] :
+#   Generator[tuple[str, str], None, None]
+#   → produit des tuples (str, str), ne recoit rien, ne retourne rien
+#
+# random.choice(liste) → pioche un element au hasard
+# random.randint(a, b) → entier aleatoire entre a et b inclus
+# list.pop(idx) → retire et retourne l'element a l'index idx
+#
+# PARADIGME :
+#   Avant (ex0-ex4) : on stocke TOUT puis on traite.
+#   Ici : on produit et consomme au fil de l'eau (streaming).
+#   Utile pour les flux massifs (logs, evenements temps reel).
+# =============================================================================

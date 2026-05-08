@@ -65,3 +65,45 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# =============================================================================
+# NOTES — Exercice 4 : dictionnaires (inventaire)
+# =============================================================================
+#
+# DICTIONNAIRE :
+#   Collection de paires cle:valeur. Acces direct par cle.
+#   inventaire = {}              → dict vide
+#   inventaire["sword"] = 1     → ajouter une paire
+#   inventaire["sword"]         → acceder a la valeur (1)
+#   "sword" in inventaire       → verifier si la cle existe
+#
+# METHODES UTILISEES :
+#   dict.keys()    → retourne les cles (noms des objets)
+#   dict.values()  → retourne les valeurs (quantites)
+#   dict.update()  → ajoute/modifie des paires
+#   ⚠ dict.items() n'est PAS autorise dans cet exercice
+#
+# PARSING DES ARGUMENTS :
+#   arg.split(":", 1) → coupe "sword:1" en ["sword", "1"]
+#   Le 1 en argument = coupe au premier ":" seulement
+#   3 cas d'erreur :
+#     - pas de ":" dans l'argument → format invalide
+#     - quantite pas convertible en int → ValueError
+#     - cle deja dans le dict → doublon
+#   A chaque erreur → print message + continue (passe au suivant)
+#
+# STATS SUR LE DICT :
+#   sum(dict.values())      → total de toutes les quantites
+#   round(qty/total*100, 1) → pourcentage arrondi a 1 decimale
+#
+# MAX / MIN :
+#   On parcourt avec for + comparaison manuelle (> et <)
+#   ⚠ Utiliser > strict (pas >=) pour garder le PREMIER en cas
+#   d'egalite (Python 3.7+ respecte l'ordre d'insertion)
+#
+# POURQUOI UN DICT ET PAS UNE LISTE :
+#   Avec une liste de tuples [("sword",1), ...], chercher un objet
+#   demande de tout parcourir. Avec un dict, inventaire["sword"]
+#   donne la valeur immediatement (acces direct par cle).
+# =============================================================================

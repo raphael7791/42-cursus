@@ -35,3 +35,44 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# =============================================================================
+# NOTES — Exercice 6 : comprehensions (list & dict)
+# =============================================================================
+#
+# LIST COMPREHENSION :
+#   Sucre syntaxique = meme resultat qu'une boucle, en une ligne.
+#
+#   Sans : resultat = []
+#          for n in players: resultat.append(n.capitalize())
+#
+#   Avec : resultat = [n.capitalize() for n in players]
+#
+#   Structure : [expression for element in liste]
+#
+# AVEC FILTRE (if) :
+#   [n for n in players if n[0].isupper()]
+#   → garde seulement les noms deja capitalises
+#   Structure : [expression for element in liste if condition]
+#
+# DICT COMPREHENSION :
+#   Meme principe, avec accolades et cle:valeur
+#   {name: random.randint(50, 950) for name in all_capitalized}
+#   Structure : {cle: valeur for element in liste}
+#
+#   Avec filtre :
+#   {name: score for name, score in scores.items() if score > avg}
+#
+# OUTILS :
+#   .capitalize()   → "bob" → "Bob" (1ere lettre majuscule)
+#   .isupper()      → True si le caractere est majuscule
+#   n[0]            → premier caractere d'une string
+#   scores.items()  → paires (cle, valeur) d'un dict
+#   sum() / len()   → pour calculer la moyenne
+#
+# QUAND UTILISER :
+#   Comprehension = ideal si la logique est simple (1 expression).
+#   Si trop complexe → boucle classique plus lisible.
+#   Doit tenir sur une ligne (ou couper proprement pour flake8).
+# =============================================================================

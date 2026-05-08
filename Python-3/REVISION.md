@@ -84,7 +84,111 @@ Si tu utilisais une liste de tuples `[("sword", 1), ("potion", 5), ...]`, tu pou
 
 ## Ex5 — Data Stream (generators, yield)
 
-*(à venir)*
+### En deux phrases
+Tu construis un flux d'événements de jeu qui produit des événements à la demande, sans tous les stocker d'un coup en mémoire. C'est l'occasion de découvrir les générateurs, une mécanique Python qui permet de produire des valeurs au fur et à mesure plutôt que de les calculer toutes d'avance.
+
+### Le concept à découvrir : les générateurs
+
+C'est le seul concept nouveau de l'exercice, mais c'est un gros concept.
+
+**Le problème que ça résout**
+
+Imagine que tu veuilles produire 1 milliard d'événements. Si tu les stockes tous dans une liste, tu fais exploser la mémoire de ta machine.
+```python
+événements = [créer_événement() for _ in range(1_000_000_000)]   # crash !
+```
+Un générateur te permet de produire les événements un par un, à la demande, sans jamais tous les stocker. Tu en consommes un, il disparaît, le suivant est calculé seulement quand tu en redemandes.
+
+**Comment on en crée un**
+
+Une fonction normale :
+```python
+def renvoie_truc():
+    return 42        # renvoie une fois, puis terminé
+```
+
+Un générateur, c'est juste une fonction qui utilise `yield` au lieu de `return` :
+```python
+def gen_truc():
+    while True:
+        yield 42     # « pondre » 42, puis pause, attendre la prochaine demande
+```
+
+Le mot-clé `yield` dit : « je produis cette valeur, mais je ne quitte pas la fonction définitivement — je me mets en pause, en attendant qu'on me redemande quelque chose ».
+
+**Comment on l'utilise**
+
+Soit avec `next()` à la main :
+```python
+g = gen_truc()        # on crée le générateur (la fonction n'est PAS encore exécutée)
+next(g)               # → 42 (la fonction s'exécute jusqu'au yield, puis se met en pause)
+next(g)               # → 42 (elle reprend, retourne au yield, se remet en pause)
+```
+
+Soit dans une boucle `for` :
+```python
+for valeur in gen_truc():
+    print(valeur)     # la boucle appelle next() automatiquement à chaque tour
+```
+
+### Le déroulé étape par étape
+
+**Étape 1 — Créer un générateur infini d'événements**
+
+Tu écris une fonction `gen_event()` qui :
+- Choisit aléatoirement un nom de joueur (dans une liste fixe : Alice, Bob, etc.)
+- Choisit aléatoirement une action (dans une liste fixe : run, eat, sleep, etc.)
+- `yield` un tuple `(nom, action)`
+- Ne s'arrête jamais (générateur infini, donc avec un `while True`)
+
+À chaque appel de `next()` sur ce générateur, tu obtiens un événement frais.
+
+**Étape 2 — Consommer 1000 événements**
+
+Dans le programme principal, tu fais une boucle `for` qui appelle ton générateur 1000 fois et affiche chaque événement avec son numéro. C'est de la consommation linéaire : tu reçois, tu affiches, tu jettes. Tu ne stockes pas les 1000 événements.
+
+**Étape 3 — Créer une liste de 10 événements**
+
+Cette fois, au lieu de jeter les événements, tu en stockes 10 dans une liste. Tu génères 10 fois et tu `append`. À la fin tu as une vraie liste de 10 tuples en mémoire.
+
+**Étape 4 — Créer un deuxième générateur qui consomme la liste**
+
+Tu écris `consume_event(liste)` qui :
+- Prend la liste de 10 événements en argument
+- Tant que la liste n'est pas vide : choisit un événement au hasard, le retire de la liste (`pop`), le `yield`
+- S'arrête quand la liste est vide
+
+Et tu utilises ce générateur directement dans une boucle `for`. À chaque tour, l'événement « consommé » disparaît de la liste, on voit la liste rétrécir.
+
+### Les outils nouveaux
+
+- Le mot-clé **`yield`** — produire une valeur depuis un générateur
+- La fonction **`next(generateur)`** — demander la prochaine valeur
+- **`typing.Generator`** — l'annotation de type pour les générateurs (pour mypy)
+- **`random.choice(liste)`** — pioche un élément au hasard dans une liste
+
+L'annotation de type : `Generator[YieldType, SendType, ReturnType]`. Comme ton générateur ne reçoit rien et ne retourne rien à la fin, tu mets `None` pour les deux derniers :
+```python
+def gen_event() -> Generator[tuple[str, str], None, None]:
+```
+
+### Le piège central : yield vs return
+
+| `return` | `yield` |
+|---|---|
+| Quitte définitivement la fonction | Met la fonction en pause |
+| Une seule exécution possible | Reprend là où elle s'était arrêtée |
+| La fonction est terminée | La fonction est suspendue, prête à reprendre |
+
+**Pourquoi un générateur infini ne plante pas ?**
+
+Parce qu'il n'exécute rien tant qu'on ne lui demande rien. Le `while True` ne tourne pas en boucle infinie : il tourne un tour à chaque `next()`, puis se remet en pause. Si tu appelles `next()` 1000 fois, tu fais 1000 tours. Si tu n'appelles jamais `next()`, le `while True` ne s'exécute même pas une fois.
+
+### La différence avec les exercices précédents
+
+Jusqu'ici, tu stockais les données (listes, sets, dicts) puis tu les traitais. Ici, tu produis et consommes au fil de l'eau : c'est un changement de paradigme. C'est typiquement comment on traite des flux de données massifs (logs serveur, événements en temps réel, fichiers énormes…).
+
+---
 
 ## Ex6 — Data Alchemist (comprehensions)
 

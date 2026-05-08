@@ -192,4 +192,92 @@ Jusqu'ici, tu stockais les données (listes, sets, dicts) puis tu les traitais. 
 
 ## Ex6 — Data Alchemist (comprehensions)
 
-*(à venir)*
+### En deux phrases
+Tu as une liste de noms de joueurs et tu dois la transformer de différentes façons en une seule ligne de code à chaque fois. C'est l'occasion de découvrir les comprehensions, une syntaxe Python qui condense une boucle `for` + `append` en une seule expression.
+
+### Le concept : les comprehensions
+
+C'est du **sucre syntaxique** — ça fait la même chose qu'une boucle, mais en plus court.
+
+**Sans comprehension** (façon classique) :
+```python
+resultat = []
+for n in players:
+    resultat.append(n.capitalize())
+```
+
+**Avec list comprehension** (même résultat, une ligne) :
+```python
+resultat = [n.capitalize() for n in players]
+```
+
+Structure : `[expression for element in liste]`
+
+### Avec un filtre (if)
+
+On peut ajouter un `if` pour ne garder que certains éléments :
+
+```python
+# Sans comprehension
+resultat = []
+for n in players:
+    if n[0].isupper():
+        resultat.append(n)
+
+# Avec comprehension
+resultat = [n for n in players if n[0].isupper()]
+```
+
+Structure : `[expression for element in liste if condition]`
+
+### Dict comprehension
+
+Même principe mais pour créer un dictionnaire :
+
+```python
+scores = {name: random.randint(50, 950) for name in all_capitalized}
+# → {"Alice": 263, "Bob": 666, "Charlie": 907, ...}
+```
+
+Structure : `{clé: valeur for element in liste}`
+
+Avec filtre :
+```python
+high_scores = {name: score for name, score in scores.items() if score > average}
+```
+
+Ne garde que les paires où le score dépasse la moyenne.
+
+### Le déroulé étape par étape
+
+**Étape 1** — Créer une liste de noms de joueurs (certains capitalisés, d'autres non)
+
+**Étape 2** — List comprehension : capitaliser TOUS les noms
+```python
+[n.capitalize() for n in players]
+# ["Alice", "bob"] → ["Alice", "Bob"]
+```
+
+**Étape 3** — List comprehension avec filtre : garder seulement les noms DÉJÀ capitalisés
+```python
+[n for n in players if n[0].isupper()]
+# ["Alice", "bob", "Charlie"] → ["Alice", "Charlie"]
+```
+
+**Étape 4** — Dict comprehension : associer un score aléatoire à chaque nom
+```python
+{name: random.randint(50, 950) for name in all_capitalized}
+```
+
+**Étape 5** — Calculer la moyenne, puis dict comprehension avec filtre : garder seulement les scores au-dessus de la moyenne
+
+### Les outils
+
+- `.capitalize()` : première lettre en majuscule, le reste en minuscule
+- `.isupper()` : vérifie si un caractère est en majuscule
+- `n[0]` : première lettre d'une string (comme un index de liste)
+- `scores.items()` : retourne les paires (clé, valeur) d'un dict
+
+### Le piège
+
+Les comprehensions doivent tenir sur **une seule ligne** (sauf si ça dépasse la limite flake8 de 79 caractères, auquel cas on peut couper proprement). Chaque comprehension remplace un bloc `for` + `append` — si la logique est trop complexe, mieux vaut rester sur une boucle classique.

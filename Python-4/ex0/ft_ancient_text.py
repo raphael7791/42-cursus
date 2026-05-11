@@ -23,7 +23,7 @@ def main() -> None:
     try:
         content: str = f.read()
         print("---")
-        print(content, end="")
+        print(content, end="" if content.endswith("\n") else "\n")
         print("---")
     finally:
         f.close()

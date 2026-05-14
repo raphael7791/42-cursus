@@ -123,7 +123,7 @@ def main() -> None:
     print("Test invalid ingestion of string 'foo' "
           "without prior validation:")
     try:
-        num.ingest("foo")  # type: ignore
+        num.ingest("foo")
     except ValueError as e:
         print(f"Got exception: {e}")
     print("Processing data: [1, 2, 3, 4, 5]")

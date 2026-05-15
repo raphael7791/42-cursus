@@ -1,26 +1,37 @@
 # Python-6 : The Codex — Mastering Python's Import Mysteries
 
+## Avant de commencer : c'est quoi un import ?
+
+En C, quand tu voulais utiliser `printf()`, tu faisais :
+```c
+#include <stdio.h>
+```
+
+En Python c'est pareil. Si tu veux utiliser une fonction qui est dans un autre fichier, tu dois l'importer. C'est ca un import : aller chercher du code qui est ailleurs.
+
+---
+
 ## Partie 1 : The Alembic (les bases de l'import)
 
-### Ce qu'on te demande de créer
+### Ce qu'on te demande de creer
 
-2 fichiers de fonctions :
+Tous ces fichiers font partie de la Partie 1 (c'est un seul bloc) :
+
 ```
-elements.py                    <- a la racine du projet
+elements.py                    <- a la racine, contient create_fire() et create_water()
 alchemy/
     __init__.py                <- fait de "alchemy" un package
-    elements.py                <- dans le dossier alchemy
+    elements.py                <- contient create_earth() et create_air()
+ft_alembic_0.py a ft_alembic_5.py   <- 6 scripts de test
 ```
-
-6 scripts de test (ft_alembic_0.py a ft_alembic_5.py) qui importent ces fonctions de 6 manieres differentes.
 
 ### Les notions a comprendre
 
 **C'est quoi un module ?**
-Un module c'est juste un **fichier `.py`**. C'est tout. `elements.py` est un module. Tu peux l'importer depuis un autre fichier.
+Un module c'est juste un fichier `.py`. C'est tout. `elements.py` est un module. Tu peux l'importer depuis un autre fichier.
 
 **C'est quoi un package ?**
-Un package c'est un **dossier** qui contient un fichier `__init__.py`. Ca permet de regrouper des modules. Le dossier `alchemy/` avec son `__init__.py` est un package.
+Un package c'est un dossier qui contient un fichier `__init__.py`. Ca permet de regrouper des modules. Le dossier `alchemy/` avec son `__init__.py` est un package.
 
 ```
 alchemy/              <- c'est un package (dossier + __init__.py)
@@ -31,30 +42,52 @@ alchemy/              <- c'est un package (dossier + __init__.py)
 Sans `__init__.py`, le dossier `alchemy/` serait juste un dossier normal, pas un package importable.
 
 **C'est quoi `__init__.py` ?**
-C'est le fichier qui s'execute quand tu fais `import alchemy`. Il controle **ce qui est accessible** quand on importe le package. Tu peux y mettre des imports pour exposer certaines fonctions et en cacher d'autres.
+C'est le fichier qui s'execute quand tu fais `import alchemy`. Il controle ce qui est accessible quand on importe le package.
 
-### Les 6 manieres d'importer
+C'est comme la vitrine d'un magasin. Tu choisis ce que tu mets en vitrine (les fonctions importees dans `__init__.py`). Le reste existe dans l'arriere-boutique (les fichiers du package) mais le client (l'utilisateur du package) n'y a pas acces directement via `import alchemy`.
+
+Exemple :
+```python
+# alchemy/__init__.py
+from alchemy.elements import create_air       # expose create_air
+# create_earth n'est PAS importe ici
+```
+
+Resultat :
+```python
+import alchemy
+alchemy.create_air()      # marche (dans la vitrine)
+alchemy.create_earth()    # ERREUR (pas dans la vitrine)
+```
+
+Le `# noqa: F401` qu'on met dans `__init__.py` c'est un commentaire pour flake8. Flake8 dit "tu importes create_air mais tu l'utilises pas dans ce fichier !". Le `# noqa: F401` lui dit "c'est normal, tais-toi". Dans un `__init__.py`, on importe expres pour exposer, pas pour utiliser.
+
+### Les 6 scripts de test : 6 manieres d'importer
 
 **ft_alembic_0 — `import elements`**
 ```python
-import elements              # importe le module entier
-elements.create_fire()       # on accede via module.fonction
+import elements              # importe tout le fichier
+elements.create_fire()       # obligé de mettre "elements." devant
 ```
-Tu importes le fichier `elements.py` en entier. Pour appeler une fonction, tu dois ecrire `elements.create_fire()`.
+Tu prends tout le fichier. Pour acceder a quoi que ce soit dedans, tu dois ecrire `elements.` devant. C'est comme prendre le menu entier au restaurant.
 
 **ft_alembic_1 — `from elements import create_water`**
 ```python
-from elements import create_water    # importe UNE fonction directement
-create_water()                        # pas besoin du prefixe
+from elements import create_water    # importe juste la fonction
+create_water()                        # directement, sans prefixe
 ```
-Tu importes juste la fonction. Tu peux l'appeler directement sans le nom du module.
+Tu prends juste la fonction. Tu peux l'appeler directement. C'est comme commander directement le plat, pas besoin du menu.
 
 **ft_alembic_2 — `import alchemy.elements`**
 ```python
 import alchemy.elements                  # importe un module dans un package
 alchemy.elements.create_earth()          # chemin complet
 ```
-Tu accedes au fichier `elements.py` dans le package `alchemy`. Le chemin complet c'est `alchemy.elements`.
+Le point `.` separe les niveaux de dossiers. C'est comme un chemin :
+```
+Dans le terminal :   alchemy/elements.py
+En Python :          alchemy.elements
+```
 
 **ft_alembic_3 — `from alchemy.elements import create_air`**
 ```python
@@ -69,7 +102,7 @@ import alchemy           # importe le package -> execute __init__.py
 alchemy.create_air()     # marche car __init__.py expose create_air
 alchemy.create_earth()   # ERREUR car __init__.py n'expose PAS create_earth
 ```
-La tu importes le package. Tu n'as acces qu'a ce que `__init__.py` a choisi d'exposer. C'est le role de `__init__.py` : controler l'interface publique du package.
+La tu importes le package. Tu n'as acces qu'a ce que `__init__.py` a choisi d'exposer.
 
 **ft_alembic_5 — `from alchemy import create_air`**
 ```python
@@ -78,15 +111,20 @@ create_air()
 ```
 Meme chose mais en important la fonction directement.
 
-### Resume des notions Partie 1
+### Resume Partie 1
+
+| Syntaxe | Comment appeler | Exemple |
+|---|---|---|
+| `import X` | `X.fonction()` | `import elements` -> `elements.create_fire()` |
+| `from X import Y` | `Y()` | `from elements import create_fire` -> `create_fire()` |
+| `import X.Y` | `X.Y.fonction()` | `import alchemy.elements` -> `alchemy.elements.create_earth()` |
+| `from X.Y import Z` | `Z()` | `from alchemy.elements import create_air` -> `create_air()` |
 
 | Notion | Definition |
 |---|---|
 | **Module** | Un fichier `.py` |
 | **Package** | Un dossier avec un `__init__.py` |
-| **`__init__.py`** | Fichier execute a l'import du package, controle ce qui est expose |
-| **`import X`** | Importe le module entier, acces via `X.fonction()` |
-| **`from X import Y`** | Importe juste `Y`, acces direct via `Y()` |
+| **`__init__.py`** | Fichier execute a l'import du package, controle ce qui est expose (la vitrine) |
 
 ---
 
@@ -96,52 +134,63 @@ Meme chose mais en important la fonction directement.
 
 ```
 alchemy/
-    __init__.py       <- a mettre a jour (ajouter heal alias)
+    __init__.py       <- a mettre a jour (ajouter heal alias + strength_potion)
     potions.py        <- NOUVEAU : utilise les elements pour creer des potions
+ft_distillation_0.py
+ft_distillation_1.py
 ```
 
-Et 2 scripts de test :
+### C'est quoi `potions.py` ?
 
-**ft_distillation_0** — `from alchemy.potions import ...`
-```python
-from alchemy.potions import strength_potion, healing_potion
-strength_potion()     # acces direct au fichier potions.py
-healing_potion()
-```
-
-**ft_distillation_1** — `import alchemy`
-```python
-import alchemy
-alchemy.strength_potion()    # via le package (expose dans __init__.py)
-alchemy.heal()               # alias de healing_potion (defini dans __init__.py)
-```
-
-### Les notions a comprendre
-
-**Import imbrique : un module qui importe un autre module**
-
-`potions.py` est dans le package `alchemy/`, mais il a besoin des elements qui sont dans d'autres fichiers :
+C'est un fichier qui a besoin de fonctions d'autres fichiers pour fonctionner. Il va chercher des fonctions a deux endroits differents :
 
 ```python
-# potions.py
-from alchemy.elements import create_earth, create_air    # elements du package
-from elements import create_fire, create_water            # elements de la racine
+from alchemy.elements import create_earth, create_air    # dans alchemy/elements.py
+from elements import create_fire, create_water            # dans elements.py (racine)
 ```
 
-Un module peut importer d'autres modules. C'est une chaine d'imports.
+Puis il les combine :
+```python
+def healing_potion() -> str:
+    return f"Healing potion brewed with '{create_earth()}' and '{create_air()}'"
+```
 
-**Alias avec `as`**
+C'est ca un import imbrique : un module qui importe d'autres modules pour construire quelque chose par-dessus.
 
-Dans `__init__.py` on fait :
+### C'est quoi l'alias `heal` ?
+
+Dans `__init__.py` on ajoute :
 ```python
 from alchemy.potions import healing_potion as heal
 ```
 
-`as heal` cree un alias : un autre nom pour la meme fonction. Quand tu fais `alchemy.heal()`, ca appelle `healing_potion()`.
+`as heal` = "renomme `healing_potion` en `heal`". C'est juste un raccourci, un surnom.
 
-C'est comme un `typedef` en C ou un raccourci.
+Apres ca :
+```python
+import alchemy
+alchemy.heal()     # appelle healing_potion() mais avec un nom plus court
+```
 
-### Resume des notions Partie 2
+### Les 2 scripts de test
+
+**ft_distillation_0** — acces direct au fichier :
+```python
+from alchemy.potions import strength_potion, healing_potion
+strength_potion()      # on va chercher directement dans potions.py
+healing_potion()
+```
+
+**ft_distillation_1** — acces via le package :
+```python
+import alchemy
+alchemy.strength_potion()   # via __init__.py
+alchemy.heal()              # l'alias defini dans __init__.py
+```
+
+La difference : le premier va chercher dans le fichier directement, le deuxieme passe par `__init__.py` (la vitrine du package).
+
+### Resume Partie 2
 
 | Notion | Definition |
 |---|---|
@@ -155,68 +204,56 @@ C'est comme un `typedef` en C ou un raccourci.
 
 ### Ce qu'on te demande de creer
 
+Un nouveau sous-package (un package dans un package) :
+
 ```
 alchemy/
-    transmutation/        <- NOUVEAU sous-package
-        __init__.py       <- rend transmutation importable
-        recipes.py        <- doit utiliser import absolu ET relatif
+    __init__.py                <- a mettre a jour (exposer transmutation)
+    transmutation/             <- NOUVEAU dossier
+        __init__.py            <- pour en faire un package
+        recipes.py             <- contient lead_to_gold()
+ft_transmutation_0.py
+ft_transmutation_1.py
+ft_transmutation_2.py
 ```
 
-Et 3 scripts de test :
+### C'est quoi un sous-package ?
 
-**ft_transmutation_0** — `import alchemy.transmutation.recipes`
-```python
-import alchemy.transmutation.recipes
-alchemy.transmutation.recipes.lead_to_gold()    # chemin complet vers le fichier
-```
-Accede a `recipes.py` directement avec le chemin complet.
-
-**ft_transmutation_1** — `import alchemy.transmutation`
-```python
-import alchemy.transmutation
-alchemy.transmutation.lead_to_gold()    # via le sous-package
-```
-Importe le sous-package `transmutation`. Ca marche car `transmutation/__init__.py` expose `lead_to_gold`.
-
-**ft_transmutation_2** — `import alchemy`
-```python
-import alchemy
-alchemy.transmutation.lead_to_gold()    # via le package principal
-```
-Importe juste `alchemy`. Ca marche car `alchemy/__init__.py` importe `transmutation`, qui lui-meme expose `lead_to_gold`.
-
-### Les notions a comprendre
-
-**Sous-package**
-`transmutation/` est un package a l'interieur du package `alchemy/`. C'est un sous-package. Il a son propre `__init__.py`.
+Un package dans un package. C'est comme des sous-dossiers :
 
 ```
-alchemy/                    <- package
-    transmutation/          <- sous-package (package dans un package)
+alchemy/                  <- package
+    __init__.py
+    transmutation/        <- sous-package (package dans alchemy)
         __init__.py
         recipes.py
 ```
 
-**Import absolu vs import relatif**
+### Import absolu vs relatif — c'est quoi ?
 
 C'est LA notion centrale de cette partie.
 
-**Import absolu** = le chemin complet depuis la racine du projet :
+**Import absolu** = le chemin complet depuis la racine :
 ```python
 from alchemy.potions import strength_potion
 ```
-"Va dans `alchemy`, puis dans `potions.py`, et prends `strength_potion`". C'est un chemin complet, comme `/Users/toi/fichier.txt`.
+C'est comme un chemin absolu dans le terminal : `/Users/toi/alchemy/potions.py`. Tu pars de la racine, tu donnes le chemin entier.
 
-**Import relatif** = le chemin par rapport a ou tu es dans l'arborescence :
+**Import relatif** = le chemin par rapport a ou tu es :
 ```python
 from ..elements import create_air
 ```
-`..` = remonte d'un niveau (comme `cd ..` dans le terminal)
+C'est comme `cd ..` dans le terminal. Les points veulent dire "remonte" :
 - `.` = meme dossier
-- `..` = dossier parent
+- `..` = un niveau au-dessus (dossier parent)
 - `...` = deux niveaux au-dessus
 
-Puisque `recipes.py` est dans `alchemy/transmutation/`, `..elements` veut dire "remonte dans `alchemy/`, puis va dans `elements.py`".
+`recipes.py` est dans `alchemy/transmutation/`. Donc `..elements` veut dire :
+```
+Je suis dans :     alchemy/transmutation/
+..                 remonte dans alchemy/
+..elements         va dans alchemy/elements.py
+```
 
 **Analogie avec les chemins de fichiers :**
 ```
@@ -225,10 +262,39 @@ Relatif :  ../elements.py                      ->  from ..elements import ...
 ```
 
 **Quand utiliser lequel ?**
-- **Absolu** : plus lisible, fonctionne partout. Recommande par defaut.
-- **Relatif** : pratique dans un package quand tu importes un fichier voisin. Mais ne marche que dans un package.
+- Absolu : plus lisible, fonctionne partout. Recommande par defaut.
+- Relatif : pratique dans un package quand tu importes un fichier voisin. Mais ne marche que dans un package.
 
-### Resume des notions Partie 3
+Le sujet demande que `recipes.py` utilise au moins un de chaque.
+
+### Les 3 scripts de test
+
+Ils accedent tous a `lead_to_gold()` mais par 3 chemins differents :
+
+**ft_transmutation_0** — chemin complet vers le fichier :
+```python
+import alchemy.transmutation.recipes
+alchemy.transmutation.recipes.lead_to_gold()
+```
+Tu tapes le chemin complet. C'est long mais ca marche toujours.
+
+**ft_transmutation_1** — via le sous-package :
+```python
+import alchemy.transmutation
+alchemy.transmutation.lead_to_gold()
+```
+Plus court. Ca marche car `transmutation/__init__.py` expose `lead_to_gold`.
+
+**ft_transmutation_2** — via le package principal :
+```python
+import alchemy
+alchemy.transmutation.lead_to_gold()
+```
+Encore plus court. Ca marche car `alchemy/__init__.py` expose `transmutation`, qui lui-meme expose `lead_to_gold`.
+
+C'est une chaine : chaque `__init__.py` expose ce qu'il faut pour que le niveau au-dessus y ait acces.
+
+### Resume Partie 3
 
 | Notion | Definition |
 |---|---|
@@ -244,38 +310,34 @@ Relatif :  ../elements.py                      ->  from ..elements import ...
 
 ### Ce qu'on te demande de creer
 
+Un nouveau sous-package avec 2 paires de fichiers :
+
 ```
 alchemy/
     grimoire/                   <- NOUVEAU sous-package
         __init__.py
-        light_spellbook.py      <- PAS de circular dependency
+        light_spellbook.py      <- version qui MARCHE
         light_validator.py
-        dark_spellbook.py       <- circular dependency VOLONTAIRE
+        dark_spellbook.py       <- version qui EXPLOSE
         dark_validator.py
+ft_kaboom_0.py
+ft_kaboom_1.py
 ```
 
-Et 2 scripts de test :
+Tu crees 2 paires de fichiers qui font la meme chose :
+- light (spellbook + validator) -> ca marche
+- dark (spellbook + validator) -> ca explose
 
-**ft_kaboom_0** — light magic (ca marche)
-```python
-from alchemy.grimoire import light_spell_record
-light_spell_record('Fantasy', 'Earth, wind and fire')
-# -> "Spell recorded: Fantasy (Earth, wind and fire - VALID)"
-```
-Pas de circular dependency car l'import de `light_validator` est local (dans la fonction).
+La seule difference entre les deux : ou est place l'import.
 
-**ft_kaboom_1** — dark magic (ca explose)
-```python
-from alchemy.grimoire.dark_spellbook import dark_spell_record
-# -> ImportError: circular import !
-```
-Circular dependency car les imports sont au top-level des deux fichiers.
+### C'est quoi une dependance circulaire ?
 
-### Les notions a comprendre
+C'est quand deux fichiers s'importent l'un l'autre au top du fichier.
 
-**C'est quoi une dependance circulaire ?**
-
-C'est quand le fichier A importe le fichier B, et le fichier B importe le fichier A. Python ne peut pas les charger : il reste bloque en boucle.
+Imagine deux personnes qui se bloquent une porte :
+- A dit "j'attends que B soit pret pour entrer"
+- B dit "j'attends que A soit pret pour entrer"
+- Personne n'entre jamais
 
 ```
 dark_spellbook.py  --importe-->  dark_validator.py
@@ -285,35 +347,48 @@ dark_spellbook.py  --importe-->  dark_validator.py
 -> BOUCLE INFINIE -> ImportError !
 ```
 
-**Pourquoi le dark magic explose ?**
+### Pourquoi le dark magic explose ?
+
+Les deux fichiers s'importent au top-level (en haut du fichier) :
 
 ```python
-# dark_spellbook.py (ligne 2, top-level)
-from .dark_validator import validate_ingredients    # importe dark_validator
+# dark_spellbook.py (ligne 2)
+from .dark_validator import validate_ingredients
 
-# dark_validator.py (ligne 2, top-level)
-from .dark_spellbook import dark_spell_allowed_ingredients   # importe dark_spellbook
+# dark_validator.py (ligne 2)
+from .dark_spellbook import dark_spell_allowed_ingredients
 ```
 
-1. Python charge `dark_spellbook.py`
-2. Ligne 2 : il doit charger `dark_validator.py`
-3. Ligne 2 de `dark_validator.py` : il doit charger `dark_spellbook.py`
-4. Mais `dark_spellbook.py` n'est pas fini de charger !
-5. -> `ImportError: circular import`
+Ce qui se passe :
+1. Python commence a charger `dark_spellbook.py`
+2. Ligne 2 : "ah faut charger `dark_validator.py` d'abord"
+3. Python commence a charger `dark_validator.py`
+4. Ligne 2 : "ah faut charger `dark_spellbook.py` d'abord"
+5. Mais `dark_spellbook.py` est pas fini de charger !
+6. -> `ImportError: circular import`
 
-**Pourquoi le light magic marche ?**
+### Pourquoi le light magic marche ?
 
-L'astuce : l'import est a l'interieur de la fonction, pas au top du fichier :
+L'astuce : au lieu de mettre l'import en haut du fichier, on le met dans la fonction :
 
 ```python
-# light_spellbook.py
-def light_spell_record(spell_name, ingredients):
-    from alchemy.grimoire.light_validator import validate_ingredients  # ICI
-    ...
+# dark (explose) :
+from .dark_validator import validate_ingredients    # en haut = au chargement
+
+def dark_spell_record(...):
+    result = validate_ingredients(...)
+
+# light (marche) :
+def light_spell_record(...):
+    from alchemy.grimoire.light_validator import validate_ingredients   # dans la fonction = a l'appel
+    result = validate_ingredients(...)
 ```
 
-L'import ne se fait pas au chargement du fichier, mais seulement quand la fonction est appelee. A ce moment-la, tous les fichiers sont deja charges, donc pas de boucle.
+La difference :
+- En haut du fichier -> l'import s'execute quand Python charge le fichier. Si l'autre fichier est pas fini de charger -> boom.
+- Dans la fonction -> l'import s'execute quand tu appelles la fonction. A ce moment-la, tous les fichiers sont deja charges -> pas de probleme.
 
+Ce qui se passe etape par etape :
 ```
 Chargement : light_spellbook.py se charge -> pas d'import de validator -> OK
              light_validator.py se charge -> importe light_spellbook -> deja charge -> OK
@@ -321,10 +396,24 @@ Chargement : light_spellbook.py se charge -> pas d'import de validator -> OK
 Execution :  light_spell_record() est appelee -> importe validator -> deja charge -> OK
 ```
 
-**C'est quoi un import local (lazy import) ?**
-C'est un import a l'interieur d'une fonction au lieu d'etre en haut du fichier. Il ne s'execute que quand la fonction est appelee. C'est une des solutions pour casser les dependances circulaires.
+### Les 2 scripts de test
 
-### Resume des notions Partie 4
+**ft_kaboom_0** — light magic, ca marche :
+```python
+from alchemy.grimoire import light_spell_record
+light_spell_record('Fantasy', 'Earth, wind and fire')
+# -> "Spell recorded: Fantasy (Earth, wind and fire - VALID)"
+```
+Pas de circular dependency car l'import de `light_validator` est local (dans la fonction).
+
+**ft_kaboom_1** — dark magic, ca explose :
+```python
+from alchemy.grimoire.dark_spellbook import dark_spell_record
+# -> ImportError: circular import !
+```
+Le programme crash avant meme d'arriver au code. Juste l'import suffit a tout casser.
+
+### Resume Partie 4
 
 | Notion | Definition |
 |---|---|

@@ -1,8 +1,7 @@
 """Light spellbook module."""
-from typing import List
 
 
-def light_spell_allowed_ingredients() -> List[str]:
+def light_spell_allowed_ingredients() -> list[str]:
     """Return allowed ingredients for light magic."""
     return ["earth", "air", "fire", "water"]
 

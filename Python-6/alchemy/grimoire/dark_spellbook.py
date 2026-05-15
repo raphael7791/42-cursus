@@ -1,9 +1,8 @@
 """Dark spellbook module."""
-from typing import List
 from .dark_validator import validate_ingredients
 
 
-def dark_spell_allowed_ingredients() -> List[str]:
+def dark_spell_allowed_ingredients() -> list[str]:
     """Return allowed ingredients for dark magic."""
     return ["bats", "frogs", "arsenic", "eyeball"]
 

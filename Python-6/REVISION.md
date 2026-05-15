@@ -100,7 +100,21 @@ alchemy/
     potions.py        <- NOUVEAU : utilise les elements pour creer des potions
 ```
 
-Et 2 scripts de test (ft_distillation_0.py, ft_distillation_1.py).
+Et 2 scripts de test :
+
+**ft_distillation_0** — `from alchemy.potions import ...`
+```python
+from alchemy.potions import strength_potion, healing_potion
+strength_potion()     # acces direct au fichier potions.py
+healing_potion()
+```
+
+**ft_distillation_1** — `import alchemy`
+```python
+import alchemy
+alchemy.strength_potion()    # via le package (expose dans __init__.py)
+alchemy.heal()               # alias de healing_potion (defini dans __init__.py)
+```
 
 ### Les notions a comprendre
 
@@ -148,7 +162,28 @@ alchemy/
         recipes.py        <- doit utiliser import absolu ET relatif
 ```
 
-Et 3 scripts de test (ft_transmutation_0 a 2).
+Et 3 scripts de test :
+
+**ft_transmutation_0** — `import alchemy.transmutation.recipes`
+```python
+import alchemy.transmutation.recipes
+alchemy.transmutation.recipes.lead_to_gold()    # chemin complet vers le fichier
+```
+Accede a `recipes.py` directement avec le chemin complet.
+
+**ft_transmutation_1** — `import alchemy.transmutation`
+```python
+import alchemy.transmutation
+alchemy.transmutation.lead_to_gold()    # via le sous-package
+```
+Importe le sous-package `transmutation`. Ca marche car `transmutation/__init__.py` expose `lead_to_gold`.
+
+**ft_transmutation_2** — `import alchemy`
+```python
+import alchemy
+alchemy.transmutation.lead_to_gold()    # via le package principal
+```
+Importe juste `alchemy`. Ca marche car `alchemy/__init__.py` importe `transmutation`, qui lui-meme expose `lead_to_gold`.
 
 ### Les notions a comprendre
 
@@ -219,7 +254,22 @@ alchemy/
         dark_validator.py
 ```
 
-Et 2 scripts de test (ft_kaboom_0 et ft_kaboom_1).
+Et 2 scripts de test :
+
+**ft_kaboom_0** — light magic (ca marche)
+```python
+from alchemy.grimoire import light_spell_record
+light_spell_record('Fantasy', 'Earth, wind and fire')
+# -> "Spell recorded: Fantasy (Earth, wind and fire - VALID)"
+```
+Pas de circular dependency car l'import de `light_validator` est local (dans la fonction).
+
+**ft_kaboom_1** — dark magic (ca explose)
+```python
+from alchemy.grimoire.dark_spellbook import dark_spell_record
+# -> ImportError: circular import !
+```
+Circular dependency car les imports sont au top-level des deux fichiers.
 
 ### Les notions a comprendre
 

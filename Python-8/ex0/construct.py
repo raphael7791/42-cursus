@@ -1,5 +1,4 @@
 """construct.py — Virtual environment detection."""
-from __future__ import annotations
 import sys
 import os
 import site

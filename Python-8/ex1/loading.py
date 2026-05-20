@@ -1,5 +1,4 @@
 """loading.py — Data analysis with dependency management."""
-from __future__ import annotations
 import sys
 import importlib
 
@@ -48,64 +47,33 @@ def run_analysis() -> None:
     import pandas as pd
     import matplotlib
     matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # noqa: E402
 
     print("\nAnalyzing Matrix data...")
 
-    rng: np.random.Generator = np.random.default_rng(42)
-    n: int = 1000
-    print(f"Processing {n} data points...")
+    data = np.random.default_rng(42).integers(0, 100, size=1000)
+    print("Processing 1000 data points...")
 
-    timestamps: np.ndarray = np.arange(n)  # type: ignore[type-arg]
-    signal: np.ndarray = (  # type: ignore[type-arg]
-        np.sin(timestamps * 0.05) * 50
-        + rng.normal(0, 10, n)
-    )
-    anomaly_flags: np.ndarray = (  # type: ignore[type-arg]
-        rng.choice([0, 1], size=n, p=[0.95, 0.05])
-    )
+    df: pd.DataFrame = pd.DataFrame({"value": data})
 
-    df: pd.DataFrame = pd.DataFrame({
-        "timestamp": timestamps,
-        "signal_strength": signal,
-        "anomaly": anomaly_flags,
-    })
-
-    total: int = len(df)
-    anomalies: int = int(df["anomaly"].sum())
-    mean_signal: float = float(df["signal_strength"].mean())
-    std_signal: float = float(df["signal_strength"].std())
+    mean_val: float = float(df["value"].mean())
+    std_val: float = float(df["value"].std())
+    min_val: int = int(df["value"].min())
+    max_val: int = int(df["value"].max())
 
     print("\nMatrix Data Summary:")
-    print(f"  Total data points: {total}")
-    print(f"  Anomalies detected: {anomalies}")
-    print(f"  Mean signal strength: {mean_signal:.2f}")
-    print(f"  Signal std deviation: {std_signal:.2f}")
+    print(f"  Total data points: {len(df)}")
+    print(f"  Mean: {mean_val:.2f}")
+    print(f"  Std deviation: {std_val:.2f}")
+    print(f"  Min: {min_val}, Max: {max_val}")
 
     print("\nGenerating visualization...")
-
-    fig, axes = plt.subplots(2, 1, figsize=(12, 8))
-
-    axes[0].plot(df["timestamp"], df["signal_strength"],
-                 color="green", alpha=0.7, linewidth=0.5)
-    anomaly_data = df[df["anomaly"] == 1]
-    axes[0].scatter(anomaly_data["timestamp"],
-                    anomaly_data["signal_strength"],
-                    color="red", s=20, label="Anomaly")
-    axes[0].set_title("Matrix Signal Monitoring")
-    axes[0].set_xlabel("Timestamp")
-    axes[0].set_ylabel("Signal Strength")
-    axes[0].legend()
-
-    axes[1].hist(df["signal_strength"], bins=40,
-                 color="green", alpha=0.7, edgecolor="black")
-    axes[1].set_title("Signal Distribution")
-    axes[1].set_xlabel("Signal Strength")
-    axes[1].set_ylabel("Frequency")
-
-    plt.tight_layout()
+    plt.figure()
+    df["value"].plot(kind="hist", bins=20, title="Matrix Data Distribution")
+    plt.xlabel("Value")
+    plt.ylabel("Frequency")
     output_file: str = "matrix_analysis.png"
-    plt.savefig(output_file, dpi=100)
+    plt.savefig(output_file)
     plt.close()
 
     print("\nAnalysis complete!")

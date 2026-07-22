@@ -28,8 +28,12 @@ each generation step:
    - `string`: generated token by token with peek-ahead logic to detect closing
      quotes. A leading-space fix strips BPE artifacts from the first token.
    - `regex`: generated freely using a few-shot prompt with structural
-     constraints (digit-first tokens blocked) and post-processing (shorthand
-     normalization, bracket rebalancing, regex validation).
+     constraints to guide the model toward valid patterns.
+
+JSON validity is guaranteed by construction (forced structure + constrained
+tokens). For regex parameters, additional semantic validation ensures the
+generated pattern is a valid regex — this concerns pattern plausibility,
+not JSON structure.
 
 ### Design Decisions
 
@@ -53,8 +57,10 @@ each generation step:
 
 - Model: Qwen/Qwen3-0.6B (~600M parameters)
 - Each prompt requires multiple forward passes (one per generated token)
-- Typical inference: ~30-60 seconds per prompt on CPU, faster on MPS/CUDA
+- Total inference time: ~2-4 minutes for 11 prompts on CPU (under the 5-minute
+  limit), faster on MPS/CUDA
 - Public test results: 10/11 correct function calls
+- Private test results: 10/11 correct function calls
 - Known limitation: plural-to-character mapping (e.g. "asterisks" -> `*`) depends
   on model reasoning, which the 0.6B model sometimes fails on
 
@@ -114,16 +120,27 @@ make run
 cat data/output/function_calling_results.json
 ```
 
-Expected output for the 3 test prompts:
+Examples of expected output:
 - `"What is the sum of 2 and 3?"` -> `fn_add_numbers(a=2.0, b=3.0)`
 - `"Greet shrek"` -> `fn_greet(name="shrek")`
 - `"Reverse the string 'hello'"` -> `fn_reverse_string(s="hello")`
+
+**Validation approach:**
+- **JSON schema**: Output conformity is validated by Pydantic models (`Output`
+  with `prompt`, `name`, `parameters` fields). Any malformed output raises an
+  error before saving.
+- **Edge cases**: The program handles missing files, invalid JSON input, and
+  empty function/prompt lists with explicit error messages.
+- **Regex iteration**: Regex prompts were the most challenging to tune. The
+  few-shot prompt was iterated across multiple test cases (abstract patterns
+  like `\d+`, character classes like `[aeiouAEIOU]`, literal words like `cat`)
+  to find a format that generalizes without hardcoding.
 
 ## Resources
 
 - [Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B) — Language model
 - [Constrained Decoding](https://arxiv.org/abs/2307.09702) — Guided generation
-- [GPT-2 BPE](https://github.com/openai/gpt-2) — Byte-to-unicode tokenization
+- [Hugging Face Tokenizers](https://huggingface.co/docs/tokenizers) — BPE tokenization
 
 ### AI Usage
 

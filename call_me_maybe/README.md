@@ -21,31 +21,29 @@ each generation step:
 2. **Function name selection** — tokens are filtered to valid prefixes of
    known function names. The model's logits determine which function is chosen.
 3. **Parameter value generation** — depends on type:
-   - `number`: pre-extracted from the prompt, forced as floats.
-   - `integer`: pre-extracted from the prompt, forced as ints.
+   - `number`: only digit and `.` tokens are allowed, the model chooses values
+     via greedy decoding. If no decimal point is generated, `.0` is appended.
+   - `integer`: only digit tokens are allowed.
    - `boolean`: constrained to `true`/`false` tokens only.
-   - `string`: pre-extracted from the prompt when possible (quoted strings,
-     file paths, encodings, etc.), otherwise generated freely with
-     peek-ahead logic to detect closing quotes.
-
-A **prompt pre-extraction** step (`extract.py`) parses the user prompt to find
-candidate values (numbers, quoted strings, paths, encodings, etc.) before
-generation. This ensures exact values are preserved instead of relying on the
-small model to reproduce them token by token.
+   - `string`: generated token by token with peek-ahead logic to detect closing
+     quotes. A leading-space fix strips BPE artifacts from the first token.
+   - `regex`: generated freely using a few-shot prompt with structural
+     constraints (digit-first tokens blocked) and post-processing (shorthand
+     normalization, bracket rebalancing, regex validation).
 
 ### Design Decisions
 
 - **Constrained decoding over prompting**: A 0.6B model cannot reliably produce
   valid JSON through prompting alone. Logit filtering guarantees structural
   correctness while letting the model choose semantically.
-- **Pre-extraction of values**: String and number values are extracted directly
-  from the prompt using regex patterns, then force-injected into the JSON.
-  This compensates for the small model's limited ability to reproduce exact
-  values during free generation.
 - **Peek-ahead for quotes**: When generating strings freely, a peek-ahead
   mechanism checks whether a quote token is a closing quote or part of the
   string content, by simulating the quote and checking if the model predicts
   structural JSON next.
+- **Few-shot regex prompting**: Regex parameters use a dedicated few-shot prompt
+  with examples that include "trap" scenarios (numbers in the source text but
+  abstract regex as the answer). A structural constraint blocks digit-first
+  tokens to prevent the model from copying literal numbers from the prompt.
 - **Greedy decoding**: At each step, the highest-scoring valid token is selected.
   This is simple and fast, though beam search could improve quality.
 - **Pydantic models**: Input/output schemas are validated with Pydantic for type
@@ -56,6 +54,9 @@ small model to reproduce them token by token.
 - Model: Qwen/Qwen3-0.6B (~600M parameters)
 - Each prompt requires multiple forward passes (one per generated token)
 - Typical inference: ~30-60 seconds per prompt on CPU, faster on MPS/CUDA
+- Public test results: 10/11 correct function calls
+- Known limitation: plural-to-character mapping (e.g. "asterisks" -> `*`) depends
+  on model reasoning, which the 0.6B model sometimes fails on
 
 ### Challenges
 
@@ -63,11 +64,18 @@ small model to reproduce them token by token.
   part of the string content. The peek-ahead mechanism resolves this by
   simulating the closing and checking the model's next prediction.
 - **Small model limitations**: A 0.6B model has limited reasoning ability.
-  Pre-extracting values from the prompt compensates for the model's inability
-  to reliably reproduce exact strings, numbers, and special characters.
+  Few-shot prompting and structural constraints compensate for the model's
+  inability to reliably produce abstract patterns (like regex) without copying
+  literal values from the prompt.
+- **BPE tokenization artifacts**: BPE tokens often include a leading space
+  (e.g. ` /home` instead of `/home`). The decoder strips leading spaces from
+  the first generated string token to preserve exact values.
 - **JSON escaping**: Regex patterns like `\d+` require double-escaping
-  (`\\d+`) in JSON strings. Backslashes and quotes in extracted values must
-  be properly escaped before force-injection.
+  (`\\d+`) in JSON strings. Backslashes in generated values are escaped before
+  force-injection into the JSON structure.
+- **Regex generation**: Balancing abstract pattern generation (e.g. `\d+`) with
+  literal word matching (e.g. `cat`) required careful few-shot example design
+  and structural constraints rather than hardcoded rules.
 
 ## Instructions
 
@@ -134,7 +142,6 @@ src/
   __init__.py
   __main__.py              # Entry point and orchestration
   constrained_decoding.py  # Core constrained decoder
-  extract.py               # Prompt value pre-extraction
   models.py                # Pydantic data models
   prompt_utils.py          # Prompt building
   io_utils.py              # JSON I/O utilities

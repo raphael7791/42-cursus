@@ -1,8 +1,7 @@
 """Constrained decoding using logit filtering."""
 
+import re
 from typing import Any
-from src.extract import extract_string_value
-from src.extract import extract_numbers
 
 
 class ConstrainedDecoder:
@@ -65,17 +64,13 @@ class ConstrainedDecoder:
             ]
             if not valid:
                 break
+            if generated in names:
+                valid.append(self._quote_id)
             best_id = max(valid, key=lambda i: logits[i])
+            if best_id == self._quote_id:
+                break
             generated += self.id_to_text[best_id]
             input_ids.append(best_id)
-            if generated in names:
-                can_extend = any(
-                    n.startswith(generated)
-                    and n != generated
-                    for n in names
-                )
-                if not can_extend:
-                    break
         return input_ids
 
     def _generate_number(
@@ -168,14 +163,95 @@ class ConstrainedDecoder:
                 break
         return input_ids
 
+    def _generate_free(
+        self,
+        prompt: str,
+        max_tokens: int = 60,
+        no_digit_start: bool = False,
+    ) -> str:
+        """Generate text freely without constraints.
+
+        Used for regex patterns where constrained
+        decoding would interfere with special chars.
+        """
+        input_ids = self.model.encode(
+            prompt
+        )[0].tolist()
+        generated: list[int] = []
+        for _ in range(max_tokens):
+            logits = self.model.get_logits_from_input_ids(
+                input_ids
+            )
+            best = max(
+                range(len(logits)),
+                key=lambda i: logits[i],
+            )
+            txt = self.id_to_text.get(best, "")
+            if not txt or txt.isspace():
+                break
+            if '"' in txt or "\n" in txt:
+                break
+            if (
+                no_digit_start
+                and not generated
+                and txt[0].isdigit()
+            ):
+                valid = [
+                    t
+                    for t in range(len(logits))
+                    if self.id_to_text.get(t, "")
+                    and not self.id_to_text[t][0]
+                    .isdigit()
+                    and '"'
+                    not in self.id_to_text.get(
+                        t, ""
+                    )
+                    and "\n"
+                    not in self.id_to_text.get(
+                        t, ""
+                    )
+                    and not self.id_to_text[t]
+                    .isspace()
+                ]
+                if valid:
+                    best = max(
+                        valid,
+                        key=lambda i: logits[i],
+                    )
+                    txt = self.id_to_text[best]
+                else:
+                    break
+            input_ids.append(best)
+            generated.append(best)
+        result: str = str(
+            self.model.decode(generated)
+        ).strip()
+        # Normalize lone shorthand to quantified
+        shorthands = (
+            "\\d", "\\s", "\\w",
+            "\\D", "\\S", "\\W",
+        )
+        if result in shorthands:
+            result += "+"
+        # Rebalance unclosed brackets
+        open_b = result.count("[") - result.count(
+            "]"
+        )
+        if open_b > 0:
+            result += "]" * open_b
+        try:
+            re.compile(result)
+        except re.error:
+            result = result.rstrip('+*?}])\\')
+        return result
+
     def _is_closing_quote(
         self, input_ids: list[int]
     ) -> bool:
         """Peek ahead to check if quote closes string.
 
-        Uses the standalone quote token to simulate
-        closing, then checks if the model predicts
-        structural JSON next (, or } or ]).
+        Simulates adding a closing quote, then checks
+        if the model predicts structural JSON next.
         """
         peek_ids = input_ids + [self._quote_id]
         peek_logits = (
@@ -197,68 +273,55 @@ class ConstrainedDecoder:
     def _generate_string_content(
         self, input_ids: list[int]
     ) -> list[int]:
-        """Generate string content until quote.
+        """Generate string content until closing quote.
 
-        Uses peek-ahead to distinguish closing quotes
-        from quotes that are part of string content.
-        Tracks bracket/paren balance to avoid
-        generating structurally broken strings.
+        Content tokens (no quote) and closer tokens
+        (starting with quote) compete in the same set.
+        When the model picks a closer, peek-ahead
+        verifies it is truly a closing quote. If not,
+        an escaped quote is injected as content.
         """
-        open_parens = 0
-        open_brackets = 0
+        content_ids = [
+            tid
+            for tid, txt in self.id_to_text.items()
+            if txt and '"' not in txt
+        ]
+        closer_ids = [
+            tid
+            for tid, txt in self.id_to_text.items()
+            if txt and txt.startswith('"')
+        ]
+        valid = content_ids + closer_ids
+        if not valid:
+            return input_ids
+
+        first = True
         while True:
             logits = self.model.get_logits_from_input_ids(
                 input_ids
             )
-            best_all = max(
-                range(len(logits)),
-                key=lambda i: logits[i],
-            )
-            best_txt = self.id_to_text.get(best_all, "")
-            if (
-                '"' in best_txt
-                and open_parens <= 0
-                and open_brackets <= 0
-            ):
-                idx = best_txt.index('"')
-                after = best_txt[idx + 1:].lstrip()
-                if after and after[0] in ",}]":
-                    break
-                if not after and best_txt.strip() != '"':
-                    break
-                if best_txt.strip() == '"':
-                    if self._is_closing_quote(
-                        input_ids
-                    ):
-                        break
-                input_ids = self._force_string(
-                    input_ids, '\\"'
-                )
-                continue
-            valid = [
-                tid
-                for tid, txt in self.id_to_text.items()
-                if txt and '"' not in txt
-            ]
-            if not valid:
-                break
             best_id = max(
                 valid, key=lambda i: logits[i]
             )
-            txt = self.id_to_text[best_id]
-            open_parens += txt.count(
-                "("
-            ) - txt.count(")")
-            open_brackets += txt.count(
-                "["
-            ) - txt.count("]")
+            best_txt = self.id_to_text[best_id]
+            if best_txt.startswith('"'):
+                if self._is_closing_quote(input_ids):
+                    break
+                input_ids = self._force_string(
+                    input_ids, '\\"'
+                )
+                first = False
+                continue
+            if first and best_txt.startswith(" "):
+                clean = best_txt.lstrip(" ")
+                if clean:
+                    input_ids = self._force_string(
+                        input_ids, clean
+                    )
+                first = False
+                continue
             input_ids.append(best_id)
-        close = "]" * max(0, open_brackets)
-        close += ")" * max(0, open_parens)
-        if close:
-            input_ids = self._force_string(
-                input_ids, close
-            )
+            first = False
         return input_ids
 
     def generate(
@@ -290,10 +353,6 @@ class ConstrainedDecoder:
             input_ids, '", "parameters": {'
         )
 
-        # Pre-extract numbers from prompt
-        prompt_numbers = extract_numbers(prompt)
-        num_idx = 0
-
         # Generate each parameter value
         for i, (pname, ptype) in enumerate(
             params.items()
@@ -306,57 +365,56 @@ class ConstrainedDecoder:
                 input_ids, f'"{pname}": '
             )
             if ptype == "number":
-                if num_idx < len(prompt_numbers):
-                    val = prompt_numbers[num_idx]
-                    num_idx += 1
-                    if "." not in val:
-                        val += ".0"
-                    input_ids = self._force_string(
-                        input_ids, val
-                    )
-                else:
-                    input_ids = self._generate_number(
-                        input_ids
-                    )
+                input_ids = self._generate_number(
+                    input_ids
+                )
             elif ptype == "integer":
-                if num_idx < len(prompt_numbers):
-                    val = prompt_numbers[num_idx]
-                    num_idx += 1
-                    val = val.split(".")[0]
-                    input_ids = self._force_string(
-                        input_ids, val
-                    )
-                else:
-                    input_ids = self._generate_integer(
-                        input_ids
-                    )
+                input_ids = self._generate_integer(
+                    input_ids
+                )
             elif ptype == "boolean":
                 input_ids = self._generate_boolean(
                     input_ids
                 )
-            else:
-                candidate = extract_string_value(
-                    prompt, pname, func_name
+            elif "regex" in pname.lower():
+                regex_prompt = (
+                    "Regex pattern:\n\n"
+                    "User: Replace all numbers"
+                    " in 'room 7 floor 12'"
+                    " with X\n"
+                    "Regex: \\d+\n\n"
+                    "User: Replace all vowels"
+                    " in 'hello' with X\n"
+                    "Regex: [aeiouAEIOU]\n\n"
+                    "User: Substitute the word"
+                    " 'sun' with 'moon' in"
+                    " 'sun is bright'\n"
+                    "Regex: sun\n\n"
+                    "User: " + prompt + "\n"
+                    "Regex: "
                 )
-                if candidate is not None:
-                    escaped = candidate.replace(
-                        '\\', '\\\\'
-                    ).replace('"', '\\"')
-                    input_ids = self._force_string(
-                        input_ids, f'"{escaped}"'
+                val = self._generate_free(
+                    regex_prompt,
+                    no_digit_start=True,
+                )
+                escaped = val.replace(
+                    "\\", "\\\\"
+                )
+                input_ids = self._force_string(
+                    input_ids, f'"{escaped}"'
+                )
+            else:
+                input_ids = self._force_string(
+                    input_ids, '"'
+                )
+                input_ids = (
+                    self._generate_string_content(
+                        input_ids
                     )
-                else:
-                    input_ids = self._force_string(
-                        input_ids, '"'
-                    )
-                    input_ids = (
-                        self._generate_string_content(
-                            input_ids
-                        )
-                    )
-                    input_ids = self._force_string(
-                        input_ids, '"'
-                    )
+                )
+                input_ids = self._force_string(
+                    input_ids, '"'
+                )
 
         # Force: }}
         input_ids = self._force_string(input_ids, "}}")

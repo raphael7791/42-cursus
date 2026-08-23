@@ -1,0 +1,19 @@
+# UFC Fight Tour - Easy Map
+nb_fighters: 2
+start: LasVegas
+end: Tokyo
+
+city: LasVegas 5 [type=normal]
+city: NewYork 3 [type=normal]
+city: London 2 [type=restricted]
+city: Dubai 4 [type=vip]
+city: Tokyo 3 [type=normal]
+city: Moscow 1 [type=blocked]
+
+flight: LasVegas-NewYork [capacity=2]
+flight: LasVegas-London [capacity=1]
+flight: NewYork-London [capacity=1]
+flight: London-Dubai [capacity=1]
+flight: Dubai-Tokyo [capacity=2]
+flight: NewYork-Dubai [capacity=1]
+flight: Moscow-Tokyo [capacity=1]

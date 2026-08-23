@@ -137,12 +137,7 @@ class Graph:
                 zone = self.zones[neighbor]
                 if not zone.is_accessible():
                     continue
-                if zone.zone_type == ZoneType.PRIORITY:
-                    edge_cost = 0.5
-                elif zone.zone_type == ZoneType.RESTRICTED:
-                    edge_cost = 2.0
-                else:
-                    edge_cost = 1.0
+                edge_cost = zone.movement_cost()
                 new_cost = cost + edge_cost
                 if new_cost < dist.get(neighbor, float("inf")):
                     dist[neighbor] = new_cost
@@ -260,12 +255,7 @@ class Graph:
                 )
                 if edge_key in blocked_edges:
                     continue
-                if zone.zone_type == ZoneType.PRIORITY:
-                    edge_cost = 0.5
-                elif zone.zone_type == ZoneType.RESTRICTED:
-                    edge_cost = 2.0
-                else:
-                    edge_cost = 1.0
+                edge_cost = zone.movement_cost()
                 new_cost = cost + edge_cost
                 if new_cost < dist.get(neighbor, float("inf")):
                     dist[neighbor] = new_cost
@@ -285,12 +275,7 @@ class Graph:
         cost: float = 0.0
         for i in range(1, len(path)):
             zone = self.zones[path[i]]
-            if zone.zone_type == ZoneType.PRIORITY:
-                cost += 0.5
-            elif zone.zone_type == ZoneType.RESTRICTED:
-                cost += 2.0
-            else:
-                cost += 1.0
+            cost += zone.movement_cost()
         return cost
 
     def __repr__(self) -> str:

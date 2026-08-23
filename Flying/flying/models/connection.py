@@ -27,42 +27,6 @@ class Connection:
         self.zone_b: str = zone_b
         self.max_link_capacity: int = max_link_capacity
 
-    def connects(self, name_a: str, name_b: str) -> bool:
-        """Check if this connection links the two given zones.
-
-        Args:
-            name_a: First zone name.
-            name_b: Second zone name.
-
-        Returns:
-            True if the connection links these zones in either direction.
-        """
-        return (
-            (self.zone_a == name_a and self.zone_b == name_b)
-            or (self.zone_a == name_b and self.zone_b == name_a)
-        )
-
-    def other(self, zone_name: str) -> str:
-        """Return the zone on the other end of the connection.
-
-        Args:
-            zone_name: Name of one zone.
-
-        Returns:
-            Name of the other zone.
-
-        Raises:
-            ValueError: If zone_name is not part of this connection.
-        """
-        if zone_name == self.zone_a:
-            return self.zone_b
-        if zone_name == self.zone_b:
-            return self.zone_a
-        raise ValueError(
-            f"Zone '{zone_name}' is not part of connection "
-            f"{self.zone_a}-{self.zone_b}"
-        )
-
     def key(self) -> tuple[str, str]:
         """Return a canonical key for this connection.
 

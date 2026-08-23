@@ -59,15 +59,17 @@ class Zone:
         self.is_start: bool = is_start
         self.is_end: bool = is_end
 
-    def movement_cost(self) -> int:
+    def movement_cost(self) -> float:
         """Return the movement cost to enter this zone.
 
         Returns:
-            Number of turns to enter this zone.
+            Cost to enter this zone.
         """
+        if self.zone_type == ZoneType.PRIORITY:
+            return 0.5
         if self.zone_type == ZoneType.RESTRICTED:
-            return 2
-        return 1
+            return 2.0
+        return 1.0
 
     def is_accessible(self) -> bool:
         """Check if drones can enter this zone.

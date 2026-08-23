@@ -1,0 +1,5 @@
+Tokyo 3 normal
+London 2 restricted
+Dubai 4 vip
+Moscow 1 blocked
+LasVegas 5 normal

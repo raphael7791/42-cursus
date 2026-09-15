@@ -1,33 +1,16 @@
 """Pathfinder for distributing drones across multiple paths."""
 
-from dataclasses import dataclass
-
 from flying.models.graph import Graph
 from flying.models.drone import Drone
-
-
-@dataclass
-class PathInfo:
-    """Analysis result for a single path.
-
-    Attributes:
-        path: List of zone names from start to end.
-        throughput: Minimum capacity along the path.
-        cost: Total turn cost of the path.
-        length: Number of edges in the path.
-    """
-
-    path: list[str]
-    throughput: int
-    cost: int
-    length: int
+from flying.models.zone import ZoneType
+from flying.simulator import Simulator
 
 
 class Pathfinder:
     """Finds and distributes drone paths through the graph.
 
-    Uses divergent paths from start to avoid deadlocks,
-    and distributes drones to minimize total turns.
+    Uses k-shortest-paths + greedy distribution + simulation
+    verification to find optimal drone assignments.
     """
 
     def __init__(self, graph: Graph) -> None:
@@ -56,114 +39,67 @@ class Pathfinder:
                 "Graph missing start or end zone"
             )
 
-        paths = self._find_divergent_paths(start, end)
-
-        if not paths:
+        candidates = self.graph.k_shortest_paths(
+            start, end, k=20
+        )
+        if not candidates:
             raise RuntimeError(
                 "No path exists from start to end"
             )
 
-        infos = self._analyze_paths(paths)
-        assignments = self._distribute_drones(
-            infos, len(drones)
-        )
+        seen: set[tuple[str, ...]] = set()
+        paths: list[list[str]] = []
+        for p in candidates:
+            key = tuple(p)
+            if key not in seen:
+                seen.add(key)
+                paths.append(p)
 
-        idx = 0
-        for pi, count in enumerate(assignments):
-            for _ in range(count):
-                if idx < len(drones):
-                    drones[idx].assign_path(infos[pi].path)
-                    idx += 1
+        total = len(drones)
+        best_turns = float("inf")
+        best_assignment: list[tuple[list[str], int]] = [
+            (paths[0], total)
+        ]
 
-    def _find_divergent_paths(
-        self,
-        start: str,
-        end: str,
-    ) -> list[list[str]]:
-        """Find paths diverging through different neighbors.
+        for n_paths in range(1, len(paths) + 1):
+            subset = paths[:n_paths]
+            throughputs = [
+                self._path_throughput(p) for p in subset
+            ]
+            costs = [
+                self._real_turn_cost(p) for p in subset
+            ]
 
-        Each path goes through a different first hop from start,
-        avoiding conflicting flows through bottleneck zones.
+            assignment = self._distribute_drones(
+                subset, throughputs, costs, total
+            )
 
-        Args:
-            start: Start zone name.
-            end: End zone name.
+            turns = self._simulate_assignment(
+                assignment, total
+            )
+            if turns < best_turns:
+                best_turns = turns
+                best_assignment = assignment
 
-        Returns:
-            List of distinct paths.
-        """
-        base = self.graph.shortest_path(start, end)
-        if base is None:
-            return []
+        self._assign_interleaved(drones, best_assignment)
 
-        paths: list[list[str]] = [base]
-        used_first_hops: set[str] = set()
-        if len(base) > 1:
-            used_first_hops.add(base[1])
-
-        for neighbor in self.graph.neighbors(start):
-            if neighbor in used_first_hops:
-                continue
-            zone = self.graph.zones[neighbor]
-            if not zone.is_accessible():
-                continue
-
-            sub = self.graph.shortest_path(neighbor, end)
-            if sub is None:
-                continue
-
-            full_path = [start] + sub
-            if self._has_cycle(full_path):
-                continue
-
-            paths.append(full_path)
-            used_first_hops.add(neighbor)
-
-        return paths
-
-    def _has_cycle(self, path: list[str]) -> bool:
-        """Check if a path visits any zone twice.
+    def _real_turn_cost(self, path: list[str]) -> int:
+        """Real turn cost: 1 for normal/priority, 2 for restricted.
 
         Args:
             path: List of zone names.
 
         Returns:
-            True if any zone appears more than once.
+            Total turns to traverse this path.
         """
-        return len(path) != len(set(path))
-
-    def _analyze_paths(
-        self, paths: list[list[str]]
-    ) -> list[PathInfo]:
-        """Analyze paths for throughput and cost.
-
-        Args:
-            paths: List of paths to analyze.
-
-        Returns:
-            List of PathInfo sorted by cost.
-        """
-        result: list[PathInfo] = []
-        seen: set[tuple[str, ...]] = set()
-
-        for path in paths:
-            key = tuple(path)
-            if key in seen:
-                continue
-            seen.add(key)
-
-            info = PathInfo(
-                path=path,
-                throughput=self._path_throughput(path),
-                cost=self._path_actual_cost(path),
-                length=len(path) - 1,
-            )
-            result.append(info)
-
-        result.sort(
-            key=lambda x: (x.cost, -x.throughput)
-        )
-        return result
+        cost = 0
+        for i in range(1, len(path)):
+            zone = self.graph.zones[path[i]]
+            if zone.zone_type == ZoneType.RESTRICTED:
+                cost += 2
+            else:
+                cost += 1
+        return cost
 
     def _path_throughput(self, path: list[str]) -> int:
         """Calculate path throughput.
@@ -197,138 +133,123 @@ class Pathfinder:
             return 1
         return int(min_cap)
 
-    def _path_actual_cost(self, path: list[str]) -> int:
-        """Calculate the actual turn cost of a path.
-
-        Args:
-            path: List of zone names.
-
-        Returns:
-            Total turns to traverse this path.
-        """
-        cost = 0
-        for i in range(1, len(path)):
-            zone = self.graph.zones[path[i]]
-            cost += zone.movement_cost()
-        return cost
-
     def _distribute_drones(
         self,
-        infos: list[PathInfo],
+        paths: list[list[str]],
+        throughputs: list[int],
+        costs: list[int],
         total: int,
-    ) -> list[int]:
-        """Distribute drones across paths.
+    ) -> list[tuple[list[str], int]]:
+        """Distribute drones greedily minimizing max time.
 
         Args:
-            infos: Analyzed path information.
-            total: Total number of drones.
+            paths: Candidate paths.
+            throughputs: Per-path throughput.
+            costs: Per-path real turn cost.
+            total: Total drones.
 
         Returns:
-            List of drone counts per path.
+            List of (path, count) pairs with count > 0.
         """
-        if len(infos) == 1:
-            return [total]
+        n = len(paths)
+        counts = [0] * n
 
-        n = len(infos)
-        assignments: list[int] = [0] * n
-        remaining = total
-
-        tps = [p.throughput for p in infos]
-        total_tp = sum(tps)
-        if total_tp == 0:
-            assignments[0] = total
-            return assignments
-
-        for i in range(n):
-            share = max(
-                1,
-                (tps[i] * total) // total_tp
-            )
-            assignments[i] = min(share, remaining)
-            remaining -= assignments[i]
-            if remaining <= 0:
-                break
-
-        if remaining > 0:
-            assignments[0] += remaining
-
-        self._balance(assignments, infos, total)
-        return assignments
-
-    def _balance(
-        self,
-        assignments: list[int],
-        infos: list[PathInfo],
-        total: int,
-    ) -> None:
-        """Rebalance to minimize max turns.
-
-        Args:
-            assignments: Counts (modified in place).
-            infos: Path analysis info.
-            total: Total drones.
-        """
         for _ in range(total):
-            turns: list[float] = []
-            for i in range(len(assignments)):
-                if assignments[i] == 0:
-                    turns.append(float("inf"))
-                    continue
-                pi = infos[i]
-                if pi.throughput == 0:
-                    turns.append(float("inf"))
-                    continue
-                waves = (
-                    (assignments[i] + pi.throughput - 1)
-                    // pi.throughput
+            best_i = 0
+            best_time = float("inf")
+            for i in range(n):
+                t = self._est_turns(
+                    counts[i] + 1,
+                    throughputs[i],
+                    costs[i],
                 )
-                t = pi.cost + waves - 1
-                turns.append(float(t))
+                if t < best_time:
+                    best_time = t
+                    best_i = i
+            counts[best_i] += 1
 
-            max_t = max(turns)
-            max_i = turns.index(max_t)
-
-            improved = False
-            for j in range(len(assignments)):
-                if j == max_i or assignments[max_i] <= 1:
-                    continue
-                assignments[max_i] -= 1
-                assignments[j] += 1
-
-                nm = self._est_turns(
-                    assignments[max_i],
-                    infos[max_i],
-                )
-                nj = self._est_turns(
-                    assignments[j],
-                    infos[j],
-                )
-                if max(nm, nj) < max_t:
-                    improved = True
-                    break
-                assignments[max_i] += 1
-                assignments[j] -= 1
-
-            if not improved:
-                break
+        return [
+            (paths[i], counts[i])
+            for i in range(n)
+            if counts[i] > 0
+        ]
 
     @staticmethod
     def _est_turns(
-        count: int, info: PathInfo
+        count: int,
+        throughput: int,
+        cost: int,
     ) -> float:
-        """Estimate turns for a path.
+        """Estimate turns for count drones on a path.
 
         Args:
             count: Number of drones.
-            info: Path info.
+            throughput: Path throughput.
+            cost: Path turn cost.
 
         Returns:
             Estimated turns.
         """
-        if count == 0 or info.throughput == 0:
+        if count == 0:
             return 0.0
-        waves = (
-            (count + info.throughput - 1)
-            // info.throughput
-        )
-        return float(info.cost + waves - 1)
+        if throughput == 0:
+            return float("inf")
+        waves = (count + throughput - 1) // throughput
+        return float(cost + waves - 1)
+
+    def _simulate_assignment(
+        self,
+        assignment: list[tuple[list[str], int]],
+        total: int,
+    ) -> int:
+        """Run the simulator to get real turn count.
+
+        Args:
+            assignment: List of (path, count) pairs.
+            total: Total drones.
+
+        Returns:
+            Actual number of turns from simulation.
+        """
+        start = self.graph.start_zone
+        if start is None:
+            return total * 100
+
+        drones = [
+            Drone(i + 1, start) for i in range(total)
+        ]
+        self._assign_interleaved(drones, assignment)
+
+        sim = Simulator(self.graph, drones)
+        sim.run()
+        return sim.turn_count
+
+    @staticmethod
+    def _assign_interleaved(
+        drones: list[Drone],
+        assignment: list[tuple[list[str], int]],
+    ) -> None:
+        """Round-robin assignment to reduce contention.
+
+        Args:
+            drones: Drones to assign paths to.
+            assignment: List of (path, count) pairs.
+        """
+        remaining = [count for _, count in assignment]
+        drone_idx = 0
+
+        while drone_idx < len(drones):
+            assigned_any = False
+            for pi in range(len(assignment)):
+                if (
+                    remaining[pi] > 0
+                    and drone_idx < len(drones)
+                ):
+                    drones[drone_idx].assign_path(
+                        assignment[pi][0]
+                    )
+                    drone_idx += 1
+                    remaining[pi] -= 1
+                    assigned_any = True
+            if not assigned_any:
+                break

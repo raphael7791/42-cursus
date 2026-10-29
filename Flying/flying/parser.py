@@ -55,6 +55,8 @@ class Parser:
                 lines = f.readlines()
         except FileNotFoundError:
             raise ParseError(0, f"File not found: {filepath}")
+        except UnicodeDecodeError:
+            raise ParseError(0, f"File is not valid text: {filepath}")
         except IOError as e:
             raise ParseError(0, f"Cannot read file: {e}")
 
@@ -74,6 +76,11 @@ class Parser:
                 )
 
             elif line.startswith("start_hub:"):
+                if nb_drones is None:
+                    raise ParseError(
+                        line_num,
+                        "nb_drones must be defined before zones"
+                    )
                 if has_start:
                     raise ParseError(
                         line_num, "Duplicate start_hub definition"
@@ -85,6 +92,11 @@ class Parser:
                 has_start = True
 
             elif line.startswith("end_hub:"):
+                if nb_drones is None:
+                    raise ParseError(
+                        line_num,
+                        "nb_drones must be defined before zones"
+                    )
                 if has_end:
                     raise ParseError(
                         line_num, "Duplicate end_hub definition"
@@ -96,6 +108,11 @@ class Parser:
                 has_end = True
 
             elif line.startswith("hub:"):
+                if nb_drones is None:
+                    raise ParseError(
+                        line_num,
+                        "nb_drones must be defined before zones"
+                    )
                 zone = Parser._parse_zone(line, line_num)
                 try:
                     graph.add_zone(zone)
@@ -119,6 +136,19 @@ class Parser:
             raise ParseError(0, "Missing start_hub definition")
         if not has_end:
             raise ParseError(0, "Missing end_hub definition")
+
+        if graph.start_zone is not None:
+            start = graph.zones[graph.start_zone]
+            if not start.is_accessible():
+                raise ParseError(
+                    0, "Start hub cannot be blocked"
+                )
+        if graph.end_zone is not None:
+            end = graph.zones[graph.end_zone]
+            if not end.is_accessible():
+                raise ParseError(
+                    0, "End hub cannot be blocked"
+                )
 
         return graph, nb_drones
 
@@ -311,6 +341,12 @@ class Parser:
             raise ParseError(
                 line_num,
                 "Connection requires two zone names"
+            )
+
+        if zone_a == zone_b:
+            raise ParseError(
+                line_num,
+                f"Self-connection not allowed: '{zone_a}'"
             )
 
         max_link_capacity = 1

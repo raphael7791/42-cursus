@@ -173,10 +173,9 @@ class Simulator:
             )
 
             if not dest.has_unlimited_capacity():
-                if not is_restr:
-                    zone_occupancy[next_z] = (
-                        zone_occupancy.get(next_z, 0) + 1
-                    )
+                zone_occupancy[next_z] = (
+                    zone_occupancy.get(next_z, 0) + 1
+                )
 
         for drone, next_z in planned:
             dest = self.graph.zones[next_z]

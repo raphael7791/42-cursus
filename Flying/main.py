@@ -61,10 +61,14 @@ def main() -> None:
         simulator = Simulator(graph, drones)
         turn_lines = simulator.run()
 
+        total_drones: int = len(drones)
         for i, line in enumerate(turn_lines, start=1):
             if line:
                 if visual:
-                    visualizer.display_turn(i, line, drones)
+                    arrived: int = simulator.arrived_per_turn[i - 1]
+                    visualizer.display_turn(
+                        i, line, arrived, total_drones
+                    )
                 else:
                     print(line)
 

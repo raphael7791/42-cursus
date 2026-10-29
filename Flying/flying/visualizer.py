@@ -3,7 +3,6 @@
 from typing import Optional
 
 from flying.models.graph import Graph
-from flying.models.drone import Drone, DroneState
 
 
 ANSI_COLORS: dict[str, str] = {
@@ -87,20 +86,17 @@ class Visualizer:
         self,
         turn_num: int,
         movements: str,
-        drones: list[Drone],
+        arrived: int,
+        total: int,
     ) -> None:
         """Display a single turn's movements.
 
         Args:
             turn_num: The turn number.
             movements: Space-separated movement string.
-            drones: List of all drones.
+            arrived: Number of drones arrived at this turn.
+            total: Total number of drones.
         """
-        arrived = sum(
-            1 for d in drones if d.state == DroneState.ARRIVED
-        )
-        total = len(drones)
-
         print(
             f"{BOLD}Turn {turn_num}{RESET} "
             f"{DIM}[{arrived}/{total} arrived]{RESET}  "

@@ -30,6 +30,7 @@ class Simulator:
         self.graph: Graph = graph
         self.drones: list[Drone] = drones
         self.turns: list[str] = []
+        self.arrived_per_turn: list[int] = []
         self.turn_count: int = 0
 
     def run(self) -> list[str]:
@@ -49,6 +50,11 @@ class Simulator:
             movements = self._execute_turn()
             if movements:
                 self.turns.append(" ".join(movements))
+                arrived: int = sum(
+                    1 for d in self.drones
+                    if d.state == DroneState.ARRIVED
+                )
+                self.arrived_per_turn.append(arrived)
                 self.turn_count += 1
                 stall_count = 0
             else:

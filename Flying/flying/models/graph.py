@@ -3,7 +3,7 @@
 import heapq
 from typing import Optional
 
-from flying.models.zone import Zone, ZoneType
+from flying.models.zone import Zone
 from flying.models.connection import Connection
 
 

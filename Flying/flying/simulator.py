@@ -258,7 +258,7 @@ class Simulator:
         Returns:
             Dict with turn_count, drones_per_turn, total_cost.
         """
-        total_cost = 0
+        total_cost: float = 0.0
         for drone in self.drones:
             for i in range(1, len(drone.path)):
                 zone = self.graph.zones[drone.path[i]]

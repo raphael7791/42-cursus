@@ -39,38 +39,38 @@ def main() -> None:
         print("Error: Missing start or end zone", file=sys.stderr)
         sys.exit(1)
 
-    drones: list[Drone] = [
-        Drone(i + 1, graph.start_zone) for i in range(nb_drones)
-    ]
-
-    visualizer = Visualizer(graph)
-    if visual:
-        visualizer.display_graph()
-
-    pathfinder = Pathfinder(graph)
     try:
+        drones: list[Drone] = [
+            Drone(i + 1, graph.start_zone) for i in range(nb_drones)
+        ]
+
+        visualizer = Visualizer(graph)
+        if visual:
+            visualizer.display_graph()
+
+        pathfinder = Pathfinder(graph)
         pathfinder.find_and_assign_paths(drones)
-    except RuntimeError as e:
-        print(f"Pathfinding error: {e}", file=sys.stderr)
+
+        if debug:
+            for drone in drones:
+                print(
+                    f"[DEBUG] {drone.label()}: "
+                    f"{' -> '.join(drone.path)}"
+                )
+
+        simulator = Simulator(graph, drones)
+        turn_lines = simulator.run()
+
+        for i, line in enumerate(turn_lines, start=1):
+            if line:
+                print(line)
+
+        if visual:
+            stats = simulator.get_stats()
+            visualizer.display_stats(stats)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
-
-    if debug:
-        for drone in drones:
-            print(
-                f"[DEBUG] {drone.label()}: "
-                f"{' -> '.join(drone.path)}"
-            )
-
-    simulator = Simulator(graph, drones)
-    turn_lines = simulator.run()
-
-    for i, line in enumerate(turn_lines, start=1):
-        if line:
-            print(line)
-
-    if visual:
-        stats = simulator.get_stats()
-        visualizer.display_stats(stats)
 
 
 if __name__ == "__main__":

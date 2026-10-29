@@ -63,7 +63,10 @@ def main() -> None:
 
         for i, line in enumerate(turn_lines, start=1):
             if line:
-                print(line)
+                if visual:
+                    visualizer.display_turn(i, line, drones)
+                else:
+                    print(line)
 
         if visual:
             stats = simulator.get_stats()
